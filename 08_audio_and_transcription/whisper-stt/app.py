@@ -1,9 +1,9 @@
-from beam import task_queue, Image, Volume, PythonVersion
+from beam import endpoint, Image, Volume, PythonVersion
 
 device = "cuda"
 
 image = Image(
-    python_version=PythonVersion.Python310,
+    python_version=PythonVersion.Python38,
     python_packages=[
         "numpy",
         "git+https://github.com/openai/whisper.git",
@@ -20,7 +20,7 @@ def load_models():
     return model
 
 
-@task_queue(
+@endpoint(
     image=image,
     on_start=load_models,
     cpu=1,
@@ -28,6 +28,7 @@ def load_models():
     gpu="T4",
     volumes=[
         Volume(mount_path="./cache", name="cache"),
+        Volume(mount_path="./videos", name="videos"),
     ],
 )
 def transcribe(context, video_url):
@@ -38,8 +39,9 @@ def transcribe(context, video_url):
     yt = YouTube(video_url)
     video = yt.streams.filter(only_audio=True).first()
 
-    # Download audio to the output path
-    out_file = video.download(output_path="./")
+    # Download audio to the `videos` volume
+    out_file = video.download(output_path="./videos")
+    
     base, ext = os.path.splitext(out_file)
     new_file = base + ".mp3"
     os.rename(out_file, new_file)
@@ -51,4 +53,5 @@ def transcribe(context, video_url):
     result = model.transcribe(a)
 
     print(result["text"])
-    return {"pred": result["text"]}
+
+    return {"text": result["text"]}
