@@ -41,6 +41,7 @@ def transcribe(context, video_url):
 
     # Download audio to the `videos` volume
     out_file = video.download(output_path="./videos")
+    
     base, ext = os.path.splitext(out_file)
     new_file = base + ".mp3"
     os.rename(out_file, new_file)
@@ -52,4 +53,5 @@ def transcribe(context, video_url):
     result = model.transcribe(a)
 
     print(result["text"])
+
     return {"text": result["text"]}
