@@ -10,7 +10,7 @@ This app generates images with Stable Diffusion.
 # Quickstart
 
 0. Create a free account on [Beam](https://beam.cloud) and follow the instructions in the onboarding to add your credentials to your local environment
-1. Create a virtual environment: `pip3 -m virtualenv .venv && source .venv/bin/activate`
+1. Create a virtual environment: `python3 -m virtualenv .venv && source .venv/bin/activate`
 2. Install Beam and Reflex: `pip3 install reflex beam-client`
 
 # Usage
