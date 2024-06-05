@@ -1,13 +1,14 @@
 import requests
 
+BEAM_TOKEN = "YOUR_BEAM_TOKEN"
+BEAM_URL = "YOUR_BEAM_APP_URL"
+
 
 class BeamService:
     def __init__(self, prompt):
-        self.url = (
-            "https://app.beam.cloud/endpoint/id/93c1a2b2-d61c-4264-bcfe-999c6bf78117"
-        )
+        self.url = BEAM_URL
         self.headers = {
-            "Authorization": "Bearer FchYCvVx4vkt1oBJkxyStLqAgT-nedRQqRojzisXU1NEijUH1_ih-IpJegWylyj-6kFD_UDnfdGPiYdTKMatrQ==",
+            "Authorization": f"Bearer {BEAM_TOKEN}",
             "Content-Type": "application/json",
         }
         self.data = {"prompt": prompt}
