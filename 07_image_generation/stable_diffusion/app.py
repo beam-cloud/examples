@@ -4,16 +4,15 @@
 The code below shows how to deploy a serverless inference API for running stable diffusion.
 """
 
-from beam import Image, Volume, task_queue
+from beam import Image, Volume, task_queue, Output
 
 
 CACHE_PATH = "./models"
-IMAGES_PATH = "./images"
 model_id = "runwayml/stable-diffusion-v1-5"
 
 # The environment your app runs on
 image = Image(
-    python_version="python3.8",
+    python_version="python3.9",
     python_packages=[
         "diffusers[torch]>=0.10",
         "transformers",
@@ -46,16 +45,14 @@ def load_models():
     on_start=load_models,
     keep_warm_seconds=60,
     cpu=2,
-    memory="16Gi",
+    memory="32Gi",
     gpu="A10G",
     # Mount two storage volumes to the app: one for caching model weights, and one for the generated images
     volumes=[
         Volume(name="models", mount_path=CACHE_PATH),
-        Volume(name="images", mount_path=IMAGES_PATH),
     ],
 )
 def generate(context, prompt):
-    import os
     import torch
 
     # Retrieve pre-loaded model from loader
@@ -69,11 +66,14 @@ def generate(context, prompt):
 
     print(f"Saved Image: {image}")
 
-    # Save image to Beam Volume
-    image_path = os.path.join(IMAGES_PATH, f"{prompt.replace(' ', '_')}.png")
-    image.save(image_path)
+    BEAM_PATH = "/tmp/image.png"
 
-    # Saved image can be accessed in the 'volumes' page of your dashboard:
-    # https://platform.beam.cloud/volumes/
-    # Or, in the CLI by running `beam ls images`
-    print(f"Image saved to: {image_path}")
+    image.save(BEAM_PATH)
+
+    output = Output(path=BEAM_PATH)
+
+    print(output.id)
+    output.save()
+
+    url = output.public_url(expires=400)
+    print(url)
