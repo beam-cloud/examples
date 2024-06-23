@@ -75,7 +75,6 @@ def generate(context, prompt):
 
     # Generate image
     image = pipe(prompt, num_inference_steps=4, guidance_scale=0).images[0]
-    print(f"Saved Image: {image}")
 
     # Save image file
     output = Output.from_pil_image(image)
