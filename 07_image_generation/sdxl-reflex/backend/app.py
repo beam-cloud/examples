@@ -6,11 +6,11 @@ The code below shows how to deploy a serverless inference API for running stable
 
 from beam import Image, Volume, endpoint, Output
 
+
 CACHE_PATH = "./models"
 BASE_MODEL = "stabilityai/stable-diffusion-xl-base-1.0"
 REPO = "ByteDance/SDXL-Lightning"
 CKPT = "sdxl_lightning_4step_unet.safetensors"
-BEAM_OUTPUT_PATH = "/tmp/image.png"
 
 
 image = Image(
@@ -60,7 +60,7 @@ def load_models():
     keep_warm_seconds=60,
     cpu=2,
     memory="32Gi",
-    gpu="A10G",
+    gpu="A100-40",
     volumes=[Volume(name="models", mount_path=CACHE_PATH)],
 )
 def generate(context, prompt):
@@ -76,8 +76,7 @@ def generate(context, prompt):
 
     # Generate image
     image = pipe(prompt, num_inference_steps=4, guidance_scale=0).images[0]
-    print(f"Saved Image: {image}")
-
+    
     # Save image file
     output = Output.from_pil_image(image)
     output.save()
