@@ -5,7 +5,7 @@ This app generates images with SDXL Turbo.
 - GPU inference powered by [Beam](https://beam.cloud)
 - Frontend powered by [Reflex](https://reflex.dev/)
 
-![](/static/reflex-ui.png)
+![](./static/reflex-ui.png)
 
 # Quickstart
 
