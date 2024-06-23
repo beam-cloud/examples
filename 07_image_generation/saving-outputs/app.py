@@ -7,9 +7,6 @@ The code below shows how to retrieve a pre-signed URL to a file saved during fun
 from beam import Image as BeamImage, Output, function
 
 
-BEAM_OUTPUT_PATH = "/tmp/image.png"
-
-
 @function(
     image=BeamImage(
         python_packages=[
@@ -21,19 +18,17 @@ def save_image():
     from PIL import Image as PILImage
 
     # Example PIL image
-    image = PILImage.new(
+    pil_image = PILImage.new(
         "RGB", (100, 100), color="white"
     )  # Creating a 100x100 white image
 
     # Save image file
-    image.save(BEAM_OUTPUT_PATH)
-
-    # Attach the saved image to an Output
-    output = Output(path=BEAM_OUTPUT_PATH)
+    output = Output.from_pil_image(pil_image)
     output.save()
 
     # Retrieve pre-signed URL for output file
     url = output.public_url(expires=400)
+    print(url)
 
     # Print other details about the output
     print(f"Output ID: {output.id}")

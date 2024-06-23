@@ -2,7 +2,6 @@ from beam import endpoint, Image
 from beam import Image, Volume, endpoint, Output
 
 CACHE_PATH = "./models"
-BEAM_OUTPUT_PATH = "/tmp/image_sdx_turbo.png"
 BASE_MODEL = "stabilityai/sdxl-turbo"
 
 image = Image(
@@ -30,26 +29,24 @@ def load_models():
     image=image,
     on_start=load_models,
     keep_warm_seconds=60,
-    cpu=16,
-    memory="32Gi",
-    gpu="A100-40",
+    cpu=2,
+    memory="20Gi",
+    gpu="A10G",
     volumes=[Volume(name="models", mount_path=CACHE_PATH)],
 )
 def generate(context, prompt):
-
-
+    # Retrieve cached model from on_start function
     pipe = context.on_start_value
-
+    
+    # Inference
     image = pipe(prompt=prompt, num_inference_steps=8, guidance_scale=0.0).images[0]
-
-    print(f"Saved Image: {image}")
-
+    
     # Save image file
-    image.save(BEAM_OUTPUT_PATH)
-    output = Output(path=BEAM_OUTPUT_PATH)
+    output = Output.from_pil_image(image)
     output.save()
+
     # Retrieve pre-signed URL for output file
-    url = output.public_url()
+    url = output.public_url(expires=400)
     print(url)
 
     return {"image": url}

@@ -79,9 +79,9 @@ def generate(context, prompt):
     print(f"Saved Image: {image}")
 
     # Save image file
-    image.save(BEAM_OUTPUT_PATH)
-    output = Output(path=BEAM_OUTPUT_PATH)
+    output = Output.from_pil_image(image)
     output.save()
+
     # Retrieve pre-signed URL for output file
     url = output.public_url(expires=400)
     print(url)

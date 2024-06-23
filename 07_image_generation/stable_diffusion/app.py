@@ -64,16 +64,12 @@ def generate(context, prompt):
         with torch.autocast("cuda"):
             image = pipe(prompt, num_inference_steps=50, guidance_scale=7.5).images[0]
 
-    print(f"Saved Image: {image}")
-
-    BEAM_PATH = "/tmp/image.png"
-
-    image.save(BEAM_PATH)
-
-    output = Output(path=BEAM_PATH)
-
-    print(output.id)
+    # Save image file
+     Output.from_pil_image(image)
     output.save()
 
+    # Retrieve pre-signed URL for output file
     url = output.public_url(expires=400)
     print(url)
+
+    return {"image": url}
