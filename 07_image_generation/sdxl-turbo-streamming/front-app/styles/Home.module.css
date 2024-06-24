@@ -5,17 +5,17 @@
   padding: 20px;
 }
 
-h1 {
+.title {
   color: #333;
 }
 
-input[type="text"] {
+.inputField {
   width: 100%;
   padding: 10px;
   margin-bottom: 20px;
 }
 
-img {
+.image {
   max-width: 100%;
   height: auto;
   margin-top: 20px;

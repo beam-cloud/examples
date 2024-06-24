@@ -4,8 +4,8 @@ from typing import AsyncIterable
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from .beam_service import BeamService
-from .pydantic_models import Message
+from beam_service import BeamService
+from pydantic_models import Message
 
 app = FastAPI()
 app.add_middleware(
@@ -32,8 +32,15 @@ async def generate_image(content: str) -> AsyncIterable[bytes]:
     beam_service = BeamService(prompt=content)
     json_result = beam_service.call_api()
     image_url = json_result.get('image', "")
-    async for chunk in fetch_image(image_url):
-        yield chunk
+    # async for chunk in fetch_image(image_url):
+    #     yield chunk
+
+    # Fetch the image bytes using the image URL
+    async with aiohttp.ClientSession() as session:
+        async with session.get(image_url) as response:
+            image_bytes = await response.read()
+
+    yield image_bytes
 
 
 @app.post("/sdxl_streaming/")
