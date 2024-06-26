@@ -11,7 +11,6 @@ image = Image(
         "diffusers[torch]",
         "transformers",
         "pillow",
-        "pandas" # only to reload
     ],
 )
 
