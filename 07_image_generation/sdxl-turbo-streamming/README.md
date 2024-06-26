@@ -5,8 +5,6 @@ This app generates images with SDXL Turbo in Streamming mode.
 - GPU inference powered by [Beam](https://beam.cloud)
 - Frontend powered by [Nextjs](https://nextjs.org/)
 
-![](/static/reflex-ui.png)
-
 # Quickstart
 
 0. Create a free account on [Beam](https://beam.cloud) and follow the instructions in the onboarding to add your credentials to your local environment
