@@ -21,7 +21,7 @@ You can change `5` to `500`, and invoke this function again -- you'll see 500 co
 from beam import function
 
 
-@function()
+@function(cpu="100m", memory="100Mi")  # Each function runs on 100 millicores of CPU
 def square(x):
     sum = 0
 
@@ -35,7 +35,7 @@ def main():
     print(square.local(x=10))
     print(square.remote(x=10))
 
-    for i in square.map(range(5)):
+    for i in square.map(range(5)):  # Spin up 5 containers
         print(i)
 
 
