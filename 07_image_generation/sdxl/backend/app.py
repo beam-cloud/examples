@@ -10,7 +10,6 @@ CACHE_PATH = "./models"
 BASE_MODEL = "stabilityai/stable-diffusion-xl-base-1.0"
 REPO = "ByteDance/SDXL-Lightning"
 CKPT = "sdxl_lightning_4step_unet.safetensors"
-BEAM_OUTPUT_PATH = "/tmp/image.png"
 
 
 image = Image(
@@ -76,12 +75,11 @@ def generate(context, prompt):
 
     # Generate image
     image = pipe(prompt, num_inference_steps=4, guidance_scale=0).images[0]
-    print(f"Saved Image: {image}")
 
     # Save image file
-    image.save(BEAM_OUTPUT_PATH)
-    output = Output(path=BEAM_OUTPUT_PATH)
+    output = Output.from_pil_image(image)
     output.save()
+
     # Retrieve pre-signed URL for output file
     url = output.public_url(expires=400)
     print(url)
