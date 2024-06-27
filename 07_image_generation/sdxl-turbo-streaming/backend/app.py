@@ -2,7 +2,6 @@ from beam import endpoint, Image
 from beam import Image, Volume, endpoint, Output
 
 CACHE_PATH = "./models"
-BEAM_OUTPUT_PATH = "/tmp/image_sdx_turbo.png"
 BASE_MODEL = "stabilityai/sdxl-turbo"
 
 image = Image(
@@ -19,37 +18,34 @@ def load_models():
     from diffusers import AutoPipelineForText2Image
     import torch
 
-    pipe = AutoPipelineForText2Image.from_pretrained(BASE_MODEL, torch_dtype=torch.float16, variant="fp16")
+    pipe = AutoPipelineForText2Image.from_pretrained(
+        BASE_MODEL, torch_dtype=torch.float16, variant="fp16"
+    )
     pipe.to("cuda")
 
     return pipe
 
 
 @endpoint(
-    name="sdxl-turbo",
+    name="sdxl-turbo-streamming",
     image=image,
     on_start=load_models,
     keep_warm_seconds=60,
-    cpu=16,
+    cpu=4,
     memory="32Gi",
-    gpu="A100-40",
+    gpu="A10G",
     volumes=[Volume(name="models", mount_path=CACHE_PATH)],
 )
 def generate(context, prompt):
-
 
     pipe = context.on_start_value
 
     image = pipe(prompt=prompt, num_inference_steps=8, guidance_scale=0.0).images[0]
 
-    print(f"Saved Image: {image}")
-
     # Save image file
-    image.save(BEAM_OUTPUT_PATH)
-    output = Output(path=BEAM_OUTPUT_PATH)
+    output = Output.from_pil_image(image)
     output.save()
     # Retrieve pre-signed URL for output file
     url = output.public_url()
-    print(url)
 
     return {"image": url}
