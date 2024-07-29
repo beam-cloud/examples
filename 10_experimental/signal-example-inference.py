@@ -18,7 +18,7 @@ Look at the logs in window 1 -- you'll notice that the signal has fired, and loa
 
 from beam import endpoint, Volume, experimental, Image
 
-VOLUME_NAME = "brand_classifier"
+VOLUME_NAME = "trained-models"
 CACHE_PATH = f"./{VOLUME_NAME}-cache"
 
 
