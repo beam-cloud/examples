@@ -20,7 +20,7 @@ image = Image(
 
 
 @endpoint()
-def handler():
+def handler(image=image):
     import torch
 
     print(torch)
