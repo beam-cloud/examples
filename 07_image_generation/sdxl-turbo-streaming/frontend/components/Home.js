@@ -26,7 +26,7 @@ export default function Home() {
             {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${process.env.BEAM_AUTH_BEARER}`,
+                'Authorization': `Bearer ${process.env.BEAM_AUTH_TOKEN}`,
                 'Connection': 'keep-alive',
                 'Content-Type': 'application/json'
               },

@@ -1,6 +1,6 @@
-## sdxl-turbo
+## sdxl-turbo-streaming
 
-This app generates images with SDXL Turbo in Streamming mode.
+This app generates images with SDXL Turbo in streaming mode.
 
 - GPU inference powered by [Beam](https://beam.cloud)
 - Frontend powered by [Nextjs](https://nextjs.org/)
@@ -17,8 +17,7 @@ This app generates images with SDXL Turbo in Streamming mode.
 
 ## Start Backend
 
-1. `cd backend && beam deploy beam-app.py:generate`
-
+1. `cd backend && beam deploy app.py:generate`
 
 ## Start Frontend
 
@@ -27,8 +26,8 @@ Configuration steps:
 1. `cd frontend`
 2. Create a `.env` file with your beam key in the enviornment variables `BEAM_AUTH_BEARER` and `BEAM_API_URL`
 
-
 Running steps:
+
 1. `cd frontend`
 2. `npm install`
-2. `npm run dev`
+3. `npm run dev`
