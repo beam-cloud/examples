@@ -1,16 +1,41 @@
-from beam import endpoint, Image, Volume, Output, env
+"""
+
+### Faster Whisper on Beam ###
+
+When deployed, this can be invoked with either a URL to an .mp3 file or a base64-encoded audio file
+
+In your shell, serve this by running:
+
+`beam serve app.py:transcribe`
+
+Then, the API can be invoked like this:
+
+```bash
+ curl -X POST 'https://app.beam.cloud/endpoint/id/[YOUR-ENDPOINT-ID]' \
+-H 'Connection: keep-alive' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: Bearer [YOUR-AUTH-TOKEN]' \
+-d '{"url":"http://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3"}'
+```
+"""
+
+from beam import endpoint, Image, Volume, env
 import base64
 import requests
 from tempfile import NamedTemporaryFile
 
+
+BEAM_VOLUME_PATH = "./cached_models"
+
+
+# These packages will be installed in the remote container
 if env.is_remote():
     from faster_whisper import WhisperModel, download_model
 
-volume_path = "./cached_models"
 
-
+# This runs once when the container first starts
 def load_models():
-    model_path = download_model("large-v3", cache_dir=volume_path)
+    model_path = download_model("large-v3", cache_dir=BEAM_VOLUME_PATH)
     model = WhisperModel(model_path, device="cuda", compute_type="float16")
     return model
 
@@ -18,23 +43,23 @@ def load_models():
 @endpoint(
     on_start=load_models,
     name="faster-whisper",
-    cpu=1,
-    memory="16Gi",
-    gpu="T4",
+    cpu=2,
+    memory="32Gi",
+    gpu="A10G",
     image=Image(
-        python_version="python3.9",
-        base_image="docker.io/nvidia/cuda:12.0-cudnn8-devel-ubuntu22.04",
-        python_packages=["torch==2.1.0", "faster-whisper==0.10.0"],
+        base_image="nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04",
+        python_version="python3.10",
+        python_packages=["git+https://github.com/SYSTRAN/faster-whisper.git"],
     ),
     volumes=[
         Volume(
             name="cached_models",
-            mount_path=volume_path,
+            mount_path=BEAM_VOLUME_PATH,
         )
     ],
 )
 def transcribe(context, **inputs):
-    # Retrieve model from on_start
+    # Retrieve cached model from on_start
     model = context.on_start_value
 
     # Inputs passed to API
@@ -71,9 +96,6 @@ def transcribe(context, **inputs):
                 text += segment.text + " "
 
             print(text)
-            with open("output.txt", "w") as f:
-                f.write(text)
-
             return {"text": text}
 
         except Exception as e:
