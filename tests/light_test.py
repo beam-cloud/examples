@@ -53,14 +53,16 @@ def delete_deployments(deployment_name):
             },
         )
 
+def prepare_app_path(directory, filename):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    app_path = os.path.join(parent_dir, directory, filename)
+    os.chdir(os.path.dirname(app_path))
+    test_name = os.path.join(directory, filename).replace("\\", "/")
+    return test_name, app_path, current_dir
 
 def test_quickstart():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
-    app_path = os.path.join(current_dir, "01_getting_started", "quickstart.py")
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "01_getting_started/quickstart"
+    test_name, app_path, current_dir = prepare_app_path("01_getting_started", "quickstart.py")
 
     try:
         result = subprocess.run(["python", app_path], capture_output=True, text=True)
@@ -75,14 +77,8 @@ def test_quickstart():
 
 
 def test_custom_image():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "custom_image.py"
-    dir_name = "02_customizing_environment"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "02_customizing_environment/custom_image"
+    test_name, app_path, current_dir = prepare_app_path("02_customizing_environment", file_name)
     deployment_name = test_name.split("/")[-1]
 
     try:
@@ -115,14 +111,8 @@ def test_custom_image():
 
 
 def test_gpu_acceleration():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "gpu_acceleration.py"
-    dir_name = "02_customizing_environment"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "02_customizing_environment/gpu_acceleration"
+    test_name, app_path, current_dir = prepare_app_path("02_customizing_environment", file_name)
     deployment_name = test_name.split("/")[-1]
 
     try:
@@ -157,14 +147,8 @@ def test_gpu_acceleration():
 
 
 def test_using_secrets():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "using_secrets.py"
-    dir_name = "02_customizing_environment"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "02_customizing_environment/using_secrets"
+    test_name, app_path, current_dir = prepare_app_path("02_customizing_environment", file_name)
 
     try:
         result = subprocess.run(["python", app_path], capture_output=True, text=True)
@@ -179,14 +163,8 @@ def test_using_secrets():
 
 
 def test_creating_endpoint():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "creating_endpoint.py"
-    dir_name = "03_endpoint"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "03_endpoint/creating_endpoint"
+    test_name, _, current_dir = prepare_app_path("03_endpoint", file_name)
     deployment_name = test_name.split("/")[-1]
 
     try:
@@ -219,14 +197,8 @@ def test_creating_endpoint():
 
 
 def test_keep_warm():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "keep_warm.py"
-    dir_name = "03_endpoint"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "03_endpoint/keep_warm"
+    test_name, _, current_dir = prepare_app_path("03_endpoint", file_name)
     deployment_name = test_name.split("/")[-1]
 
     try:
@@ -259,14 +231,8 @@ def test_keep_warm():
 
 
 def test_preload_models():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "preload_models.py"
-    dir_name = "03_endpoint"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "03_endpoint/preload_models"
+    test_name, _, current_dir = prepare_app_path("03_endpoint", file_name)
     deployment_name = test_name.split("/")[-1]
 
     try:
@@ -302,14 +268,8 @@ def test_preload_models():
 
 
 def test_async_task():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "async_task.py"
-    dir_name = "04_task_queue"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "04_task_queue/async_task"
+    test_name, _, current_dir = prepare_app_path("04_task_queue", file_name)
     deployment_name = test_name.split("/")[-1]
 
     try:
@@ -365,14 +325,8 @@ def test_async_task():
 
 
 def test_task_callbacks():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "task_callbacks.py"
-    dir_name = "04_task_queue"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "04_task_queue/task_callbacks"
+    test_name, app_path, current_dir = prepare_app_path("04_task_queue", file_name)
 
     try:
         command = ["python", app_path]
@@ -393,14 +347,8 @@ def test_task_callbacks():
 
 
 def test_run_remotely():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "run_remotely.py"
-    dir_name = "05_function"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "05_function/run_remotely"
+    test_name, app_path, current_dir = prepare_app_path("05_function", file_name)
 
     try:
         command = ["python", app_path]
@@ -416,14 +364,8 @@ def test_run_remotely():
 
 
 def test_scaling_out():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "scaling_out.py"
-    dir_name = "05_function"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "05_function/scaling_out"
+    test_name, app_path, current_dir = prepare_app_path("05_function", file_name)
 
     try:
         command = ["python", app_path]
@@ -439,14 +381,8 @@ def test_scaling_out():
 
 
 def test_sharing_state():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "sharing_state.py"
-    dir_name = "05_function"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "05_function/sharing_state"
+    test_name, app_path, current_dir = prepare_app_path("05_function", file_name)
 
     try:
         command = ["python", app_path]
@@ -463,14 +399,8 @@ def test_sharing_state():
 
 
 def test_volume_use():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "volume_use.py"
-    dir_name = "06_volume"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "06_volume/volume_use"
+    test_name, app_path, current_dir = prepare_app_path("06_volume", file_name)
 
     try:
         command = ["python", app_path]
@@ -488,14 +418,8 @@ def test_volume_use():
 
 
 def test_outputs():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-
     file_name = "outputs.py"
-    dir_name = "07_outputs"
-    app_path = os.path.join(current_dir, dir_name, file_name)
-    os.chdir(os.path.dirname(app_path))
-
-    test_name = "07_outputs/outputs"
+    test_name, app_path, current_dir = prepare_app_path("07_outputs", file_name)
 
     try:
         command = ["python", app_path]
