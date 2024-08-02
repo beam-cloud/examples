@@ -7,7 +7,7 @@ tasks to a queue and process them later, either sequentially or concurrently.
 
 Task queues are deployed the same way as web endpoints. 
 
-As a recap, this is the CLI command to deploy an task queue or endpoint:
+As a recap, this is the CLI command to deploy a task queue or endpoint:
 
 ```
 beam deploy [file.py]:[function] --name [name]
@@ -36,5 +36,6 @@ def multiply(**inputs):
     return {"result": result}
 
 
-# Interactively enqueue a task without deploying
-multiply.put(x=1)
+if __name__ == "__main__":
+    # Interactively enqueue a task without deploying
+    multiply.put(x=1)

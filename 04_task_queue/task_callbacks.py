@@ -12,7 +12,7 @@ Callbacks fire for both successful and failed tasks.
 from beam import function
 
 
-@function(callback_url="https://your-server.io")
+@function(callback_url="https://www.beam.cloud/")
 def handler(x):
     return {"result": x}
 

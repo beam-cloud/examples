@@ -20,4 +20,4 @@ def handler():
 
 
 if __name__ == "__main__":
-    handler.remote()
+    print(handler.remote())

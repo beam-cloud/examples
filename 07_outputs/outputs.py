@@ -35,11 +35,10 @@ def save_image():
     # Print other details about the output
     print(f"Output ID: {output.id}")
     print(f"Output Path: {output.path}")
-    print(f"Output Stats: {output.stat()}")
     print(f"Output Exists: {output.exists()}")
 
     return {"image": url}
 
 
 if __name__ == "__main__":
-    save_image()
+    save_image.remote()

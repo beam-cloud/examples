@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "beam-examples"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+beam-client = "^0.2.58"
+pytest = "^8.3.2"
+numpy = "^2.0.1"
+transformers = "^4.43.3"
+torch = "^2.4.0"
+datasets = "^2.20.0"
+peft = "^0.12.0"
+wandb = "^0.17.5"
+pillow = "^10.4.0"
+diffusers = "^0.29.2"
+backoff = "^2.2.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest-xdist = "^3.6.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
