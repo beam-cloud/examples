@@ -5,6 +5,8 @@ on: [push, pull_request, workflow_dispatch]
 jobs:
   light-test:
     runs-on: ubuntu-latest
+    env:
+      BEAM_AUTH_TOKEN: ${{ secrets.BEAM_AUTH_TOKEN }}
 
     steps:
     - uses: actions/checkout@v3
