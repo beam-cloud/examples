@@ -37,6 +37,7 @@ jobs:
     - name: configure beam
       run: |
         source .venv/bin/activate
+        unset CI
         beam configure ghact --token $BEAM_AUTH_TOKEN
         beam config select ghact
 
