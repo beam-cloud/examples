@@ -9,6 +9,7 @@ import backoff
 WORKSPACE_ID = os.getenv("BEAM_WORKSPACE_ID")
 AUTH_TOKEN = os.getenv("BEAM_AUTH_TOKEN")
 
+curl_pattern = r"(curl -X POST.+\n(\s*-H .+\n)*\s*-d \'{.*?}\')"
 
 def parse_curl(curl_command):
     # Parse the URL
@@ -62,17 +63,33 @@ def prepare_app_path(directory, filename):
     return test_name, app_path, current_dir
 
 def test_quickstart():
-    test_name, app_path, current_dir = prepare_app_path("01_getting_started", "quickstart.py")
+    file_name = "quickstart.py"
+    test_name, _, current_dir = prepare_app_path("01_getting_started", file_name)
+    deployment_name = test_name.split("/")[-1]
 
     try:
-        result = subprocess.run(["python", app_path], capture_output=True, text=True)
+        command = [
+            "beam",
+            "deploy",
+            f"{file_name}:run",
+            "--name",
+            deployment_name,
+        ]
+        result = subprocess.run(command, capture_output=True, text=True)
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
-        assert (
-            "Function complete" in result.stdout
-        ), f"{test_name} function did not complete"
-        assert "{'sum':" in result.stdout, f"{test_name} no sum in output"
+        assert "Deployed" in result.stdout, f"{test_name} failed to deploy"
 
+        match = re.search(curl_pattern, result.stdout, re.DOTALL)
+        assert match is not None, f"{test_name} no curl command found"
+        r = parse_curl(match.group(0))
+        with requests.Session() as session:
+            response = session.send(r)
+            assert (
+                response.status_code == 200
+            ), f"{test_name} request to endpoint failed with status code: {response.status_code}"
+            assert "success" in response.text, f"{test_name} unexpected response"
     finally:
+        delete_deployments(deployment_name)
         os.chdir(current_dir)
 
 
