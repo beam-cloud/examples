@@ -10,6 +10,15 @@
 
 This repo includes various code examples that demonstrate the functionality of Beam.
 
+## Running examples
+Some of the examples showcase local usecases and others are examples of full deployments. For the examples that can 
+be run locally, you can use poetry to get python setup correctly. 
+
+```bash 
+poetry install 
+poetry shell
+```
+
 ---
 
 **Attention Beta9 users**: These examples are for the [beam.cloud](beam.cloud) product. If you are coming from the open-source [Beta9](https://github.com/beam-cloud/beta9/) repo, any of these examples can be run by changing the Python imports from **beam** to **beta9**:

@@ -11,8 +11,8 @@ from beam import endpoint
 
 @endpoint(gpu="T4")
 def handler():
-    print("📡 This is running on a GPU!")
     print(subprocess.check_output(["nvidia-smi"]))
+    return "This container has a GPU attached 📡!"
 
 
 if __name__ == "__main__":

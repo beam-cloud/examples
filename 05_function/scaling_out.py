@@ -23,6 +23,8 @@ def main():
     for result in square.map(numbers):
         print(result)
         squared.append(result)
+    
+    print("result", squared)
 
 
 if __name__ == "__main__":

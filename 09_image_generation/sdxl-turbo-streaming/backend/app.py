@@ -1,4 +1,3 @@
-from beam import endpoint, Image
 from beam import Image, Volume, endpoint, Output
 
 CACHE_PATH = "./models"

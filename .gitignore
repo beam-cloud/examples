@@ -4,3 +4,4 @@ __pycache__
 __downloads__
 .env
 .venv
+.vscode/launch.json

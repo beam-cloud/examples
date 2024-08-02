@@ -51,6 +51,4 @@ def predict(context, prompt):
         generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
     )[0]
 
-    print(result)
-
     return {"prediction": result}
