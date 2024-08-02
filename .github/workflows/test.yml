@@ -37,10 +37,13 @@ jobs:
     - name: configure beam
       run: |
         source .venv/bin/activate
-        unset CI
-        beam configure ghact --token $BEAM_AUTH_TOKEN
-        beam config select ghact
-
+        mkdir -p ~/.beam
+        cat << EOF > ~/.beam/config.ini
+        [default]
+        token = ${{ secrets.BEAM_AUTH_TOKEN }}
+        gateway_host = gateway.beam.cloud
+        gateway_port = 443
+        EOF
 
     - name: run tests
       run: |
