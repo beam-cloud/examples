@@ -346,8 +346,8 @@ def test_task_callbacks():
         os.chdir(current_dir)
 
 
-def test_run_remotely():
-    file_name = "run_remotely.py"
+def test_running_functions():
+    file_name = "running_functions.py"
     test_name, app_path, current_dir = prepare_app_path("05_function", file_name)
 
     try:
@@ -357,7 +357,8 @@ def test_run_remotely():
         assert (
             "Function complete" in result.stdout
         ), f"{test_name} function did not complete"
-        assert "arr" in result.stdout, f"{test_name} arr not found in output"
+        assert "{'sum': 285}" in result.stdout, f"{test_name} sum not found in output"
+        assert "{'sum': 14}" in result.stdout, f"{test_name} sum not found in output"
 
     finally:
         os.chdir(current_dir)
