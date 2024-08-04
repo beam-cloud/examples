@@ -44,15 +44,16 @@ def delete_deployments(deployment_name):
     )
 
     res = json.loads(res.text)
-    for d in res:
-        d_id = d["external_id"]
-        requests.delete(
-            f"https://app.beam.cloud/api/v1/deployment/{WORKSPACE_ID}/{d_id}",
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + AUTH_TOKEN,
-            },
-        )
+    if res:
+        for d in res:
+            d_id = d["external_id"]
+            requests.delete(
+                f"https://app.beam.cloud/api/v1/deployment/{WORKSPACE_ID}/{d_id}",
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + AUTH_TOKEN,
+                },
+            )
 
 def prepare_app_path(directory, filename):
     current_dir = os.path.dirname(os.path.abspath(__file__))

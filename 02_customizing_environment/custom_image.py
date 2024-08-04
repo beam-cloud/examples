@@ -22,4 +22,4 @@ image = Image(
 def handler():
     import torch
 
-    return {"torch_version": + torch.__version__}
+    return {"torch_version": torch.__version__}
