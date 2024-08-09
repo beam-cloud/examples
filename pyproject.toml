@@ -18,6 +18,7 @@ wandb = "^0.17.5"
 pillow = "^10.4.0"
 diffusers = "^0.29.2"
 backoff = "^2.2.1"
+pytest-xdist = "^3.6.1"
 
 
 [tool.poetry.group.dev.dependencies]
