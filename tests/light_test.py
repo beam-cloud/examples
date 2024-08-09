@@ -55,24 +55,25 @@ def delete_deployments(deployment_name):
                 },
             )
 
-def prepare_app_path(directory, filename):
+def prepare_app_path(directory):
+    file_name = "app.py"
     current_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(current_dir)
-    app_path = os.path.join(parent_dir, directory, filename)
+    app_path = os.path.join(parent_dir, directory, file_name)
     os.chdir(os.path.dirname(app_path))
-    test_name = os.path.join(directory, filename).replace("\\", "/")
+    test_name = os.path.join(directory, file_name).replace("\\", "/")
     return test_name, app_path, current_dir
 
 def test_quickstart():
-    file_name = "quickstart.py"
-    test_name, _, current_dir = prepare_app_path("01_getting_started", file_name)
+    dir_name = "quickstart"
+    test_name, _, current_dir = prepare_app_path(dir_name)
     deployment_name = test_name.split("/")[-1]
 
     try:
         command = [
             "beam",
             "deploy",
-            f"{file_name}:run",
+            "app.py:run",
             "--name",
             deployment_name,
         ]
@@ -95,15 +96,15 @@ def test_quickstart():
 
 
 def test_custom_image():
-    file_name = "custom_image.py"
-    test_name, app_path, current_dir = prepare_app_path("02_customizing_environment", file_name)
+    dir_name = "custom_images"
+    test_name, _, current_dir = prepare_app_path(dir_name)
     deployment_name = test_name.split("/")[-1]
 
     try:
         command = [
             "beam",
             "deploy",
-            f"{file_name}:handler",
+            "app.py:handler",
             "--name",
             deployment_name,
         ]
@@ -129,15 +130,14 @@ def test_custom_image():
 
 
 def test_gpu_acceleration():
-    file_name = "gpu_acceleration.py"
-    test_name, app_path, current_dir = prepare_app_path("02_customizing_environment", file_name)
+    test_name, _, current_dir = prepare_app_path("gpu_acceleration")
     deployment_name = test_name.split("/")[-1]
 
     try:
         command = [
             "beam",
             "deploy",
-            f"{file_name}:handler",
+            "app.py:handler",
             "--name",
             deployment_name,
         ]
@@ -165,8 +165,7 @@ def test_gpu_acceleration():
 
 
 def test_using_secrets():
-    file_name = "using_secrets.py"
-    test_name, app_path, current_dir = prepare_app_path("02_customizing_environment", file_name)
+    test_name, app_path, current_dir = prepare_app_path("secrets")
 
     try:
         result = subprocess.run(["python", app_path], capture_output=True, text=True)
@@ -181,15 +180,14 @@ def test_using_secrets():
 
 
 def test_creating_endpoint():
-    file_name = "creating_endpoint.py"
-    test_name, _, current_dir = prepare_app_path("03_endpoint", file_name)
+    test_name, _, current_dir = prepare_app_path("endpoints")
     deployment_name = test_name.split("/")[-1]
 
     try:
         command = [
             "beam",
             "deploy",
-            f"{file_name}:multiply",
+            "app.py:multiply",
             "--name",
             deployment_name,
         ]
@@ -215,15 +213,14 @@ def test_creating_endpoint():
 
 
 def test_keep_warm():
-    file_name = "keep_warm.py"
-    test_name, _, current_dir = prepare_app_path("03_endpoint", file_name)
+    test_name, _, current_dir = prepare_app_path("keep_warm")
     deployment_name = test_name.split("/")[-1]
 
     try:
         command = [
             "beam",
             "deploy",
-            f"{file_name}:handler",
+            "app.py:handler",
             "--name",
             deployment_name,
         ]
@@ -249,15 +246,14 @@ def test_keep_warm():
 
 
 def test_preload_models():
-    file_name = "preload_models.py"
-    test_name, _, current_dir = prepare_app_path("03_endpoint", file_name)
+    test_name, _, current_dir = prepare_app_path("preload_models")
     deployment_name = test_name.split("/")[-1]
 
     try:
         command = [
             "beam",
             "deploy",
-            f"{file_name}:predict",
+            "app.py:predict",
             "--name",
             deployment_name,
         ]
@@ -285,16 +281,15 @@ def test_preload_models():
         os.chdir(current_dir)
 
 
-def test_async_task():
-    file_name = "async_task.py"
-    test_name, _, current_dir = prepare_app_path("04_task_queue", file_name)
+def test_task_queue():
+    test_name, _, current_dir = prepare_app_path("task_queues")
     deployment_name = test_name.split("/")[-1]
 
     try:
         command = [
             "beam",
             "deploy",
-            f"{file_name}:multiply",
+            "app.py:multiply",
             "--name",
             deployment_name,
         ]
@@ -343,8 +338,7 @@ def test_async_task():
 
 
 def test_task_callbacks():
-    file_name = "task_callbacks.py"
-    test_name, app_path, current_dir = prepare_app_path("04_task_queue", file_name)
+    test_name, app_path, current_dir = prepare_app_path("callbacks")
 
     try:
         command = ["python", app_path]
@@ -365,8 +359,7 @@ def test_task_callbacks():
 
 
 def test_running_functions():
-    file_name = "running_functions.py"
-    test_name, app_path, current_dir = prepare_app_path("05_function", file_name)
+    test_name, app_path, current_dir = prepare_app_path("functions")
 
     try:
         command = ["python", app_path]
@@ -383,8 +376,7 @@ def test_running_functions():
 
 
 def test_scaling_out():
-    file_name = "scaling_out.py"
-    test_name, app_path, current_dir = prepare_app_path("05_function", file_name)
+    test_name, app_path, current_dir = prepare_app_path("scaling_out")
 
     try:
         command = ["python", app_path]
@@ -400,8 +392,7 @@ def test_scaling_out():
 
 
 def test_sharing_state():
-    file_name = "sharing_state.py"
-    test_name, app_path, current_dir = prepare_app_path("05_function", file_name)
+    test_name, app_path, current_dir = prepare_app_path("sharing_state")
 
     try:
         command = ["python", app_path]
@@ -418,8 +409,7 @@ def test_sharing_state():
 
 
 def test_volume_use():
-    file_name = "volume_use.py"
-    test_name, app_path, current_dir = prepare_app_path("06_volume", file_name)
+    test_name, app_path, current_dir = prepare_app_path("volumes")
 
     try:
         command = ["python", app_path]
@@ -437,8 +427,7 @@ def test_volume_use():
 
 
 def test_outputs():
-    file_name = "outputs.py"
-    test_name, app_path, current_dir = prepare_app_path("07_outputs", file_name)
+    test_name, app_path, current_dir = prepare_app_path("outputs")
 
     try:
         command = ["python", app_path]
