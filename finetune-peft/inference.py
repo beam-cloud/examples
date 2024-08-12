@@ -1,98 +1,93 @@
-from beam import Volume, Image, function
+from beam import Image, endpoint, env, Volume, QueueDepthAutoscaler, experimental
+
+# Path to cache model weights
+VOLUME_PATH = "./gemma-ft"
+FT_PATH = "./gemma-ft/gemma-2b-finetuned"
+MODEL_PATH = "./gemma-ft/weights"
+
+# This ensures that these packages are only loaded when the script is running remotely on Beam
+if env.is_remote():
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+    from peft import PeftModel
 
 
-MT_PATH = "./gemma-ft"
-weight_path = "./gemma-ft/weights"
-oa_path = "./gemma-ft/data/oa.jsonl"
+def load_finetuned_model():
+    global model, tokenizer, stop_token_ids
+    print("Loading latest...")
 
-
-@function(
-    volumes=[Volume(name="gemma-ft", mount_path=MT_PATH)],
-    image=Image(
-        python_packages=["transformers", "torch", "datasets", "peft", "bitsandbytes"]
-    ),
-    gpu="A100-40",
-    cpu=10,
-)
-def gemma_fine_tune():
-    import os
-    import torch
-    from datasets import load_dataset
-    from transformers import (
-        AutoTokenizer,
-        AutoModelForCausalLM,
-        TrainingArguments,
-        Trainer,
-        DataCollatorForLanguageModeling,
-    )
-    from peft import LoraConfig, get_peft_model, TaskType
-
-    os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-    if not torch.cuda.is_available():
-        return "CUDA is not available"
-
-    torch.set_float32_matmul_precision("high")
-
+    # loading the model here
     model = AutoModelForCausalLM.from_pretrained(
-        weight_path, device_map="auto", attn_implementation="eager", use_cache=False
-    )
-    tokenizer = AutoTokenizer.from_pretrained(weight_path)
-
-    lora_config = LoraConfig(
-        r=16,
-        lora_alpha=32,
-        target_modules=["q_proj", "v_proj"],
-        lora_dropout=0.05,
-        bias="none",
-        task_type=TaskType.CAUSAL_LM,
+        MODEL_PATH, attn_implementation="eager", device_map="auto", is_decoder=True
     )
 
-    model = get_peft_model(model, lora_config)
-    dataset = load_dataset("json", data_files=oa_path)
+    # loading the tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 
-    def prepare_dataset(examples):
-        conversations = examples["text"]
-        tokenized = tokenizer(
-            conversations, truncation=True, padding="max_length", max_length=512
-        )
-        tokenized["labels"] = tokenized["input_ids"].copy()
-        for i, labels in enumerate(tokenized["labels"]):
-            tokenized["labels"][i] = [-100] + labels[
-                :-1
-            ]  # -100 is the ignore index for CrossEntropyLoss
-        return tokenized
+    # using PEFT to load the LORA addition
+    model = PeftModel.from_pretrained(model, FT_PATH)
+    print(model.config)
 
-    tokenized_dataset = dataset.map(
-        prepare_dataset, batched=True, remove_columns=dataset["train"].column_names
+    stop_token = "<|im_end|>"
+    stop_token_ids = tokenizer.encode(stop_token, add_special_tokens=False)
+
+    s.clear()  # Clear the signal so it doesn't fire again
+
+
+s = experimental.Signal(
+    name="reload-model",
+    handler=load_finetuned_model,
+)
+
+
+@endpoint(
+    name="gemma-inference",
+    on_start=load_finetuned_model,
+    volumes=[Volume(name="gemma-ft", mount_path=VOLUME_PATH)],
+    cpu=1,
+    memory="16Gi",
+    gpu="T4",
+    image=Image(
+        python_version="python3.9",
+        python_packages=["transformers==4.42.0", "torch", "peft"],
+    ),
+    autoscaler=QueueDepthAutoscaler(max_containers=5, tasks_per_container=1),
+)
+def predict(**inputs):
+    global model, tokenizer, stop_token_ids  # These will have the latest values
+
+    prompt = inputs.get("prompt", None)
+    if not prompt:
+        return {"error": "Please provide a prompt."}
+
+    # now we will format the user provided prompt so that it is of the format that
+    # the fine tuning dataset expects
+    prompt = f"<|im_start|>user\n{prompt}\n<|im_end|>\n<|im_start|>assistant\n"
+
+    # we set the end of sequence token to the last token from <|im_end|>
+    # could probably use stopping criteria to check the full stop matches if  you want to.
+    inputs = tokenizer.encode(prompt, return_tensors="pt").to(model.device)
+    output = model.generate(
+        inputs,
+        max_length=100,
+        num_return_sequences=1,
+        use_cache=False,
+        eos_token_id=stop_token_ids[-1],
+        pad_token_id=tokenizer.eos_token_id,
     )
+    # note that here we are trimming the input length from the output so that
+    # only the newly generated text is returned
+    text = tokenizer.decode(output[0][len(inputs[0]) :])
+    print(text)
 
-    training_args = TrainingArguments(
-        output_dir="./gemma-ft/gemma-2b-finetuned",
-        num_train_epochs=1,
-        per_device_train_batch_size=4,
-        gradient_accumulation_steps=4,
-        learning_rate=2e-4,
-        weight_decay=0.01,
-        logging_steps=10,
-        save_steps=100,
-        save_total_limit=3,
-        fp16=True,
-        gradient_checkpointing=False,
-        remove_unused_columns=False,
-    )
-
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=tokenized_dataset["train"],
-        data_collator=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False),
-    )
-
-    trainer.train()
-    model.save_pretrained("./gemma-ft/gemma-2b-finetuned")
-    tokenizer.save_pretrained("./gemma-ft/gemma-2b-finetuned")
+    # note that the stop sequence is in the output. in a realistic scenario you would
+    # probably have some service that is tracking the conversation and would remove
+    # the stop sequence from the output before returning it to the user. it might also
+    # be storing the conversation history so that the model can continue the conversation
+    # (could potentially be a nice usecase for Maps if you want long conversations without
+    # having the front end send the entire conversation history each time; assuming you
+    # dont need long term durability of the conversation history)
+    return {"text": text}
 
 
 if __name__ == "__main__":
-    gemma_fine_tune.remote()
+    predict.remote()
