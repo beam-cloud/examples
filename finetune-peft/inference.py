@@ -1,8 +1,22 @@
+'''
+In inference.py we will define the inference endpoint for our model. This endpoint
+will load the latest model weights and tokenizer from the volume and then
+use the model to generate a response to the user provided prompt.
+
+Note that the stop sequence is in the output. In a realistic scenario you would
+probably have some service that is tracking the conversation and would remove
+the stop sequence from the output before returning it to the user. It might also
+be storing the conversation history so that the model can continue the conversation.
+This could potentially be a nice usecase for Maps if you want long conversations without
+having the front end send the entire conversation history each time. Be careful though
+because Maps are not long-term persistent and the data will eventually be lost.
+'''
+
 from beam import Image, endpoint, env, Volume, QueueDepthAutoscaler, experimental
 
 # Path to cache model weights
 VOLUME_PATH = "./gemma-ft"
-FT_PATH = "./gemma-ft/gemma-2b-finetuned"
+FINETUNE_PATH = "./gemma-ft/gemma-2b-finetuned"
 MODEL_PATH = "./gemma-ft/weights"
 
 # This ensures that these packages are only loaded when the script is running remotely on Beam
@@ -15,16 +29,14 @@ def load_finetuned_model():
     global model, tokenizer, stop_token_ids
     print("Loading latest...")
 
-    # loading the model here
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_PATH, attn_implementation="eager", device_map="auto", is_decoder=True
     )
 
-    # loading the tokenizer
     tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 
-    # using PEFT to load the LORA addition
-    model = PeftModel.from_pretrained(model, FT_PATH)
+    # using our LORA result via the PEFT library
+    model = PeftModel.from_pretrained(model, FINETUNE_PATH)
     print(model.config)
 
     stop_token = "<|im_end|>"
@@ -33,6 +45,8 @@ def load_finetuned_model():
     s.clear()  # Clear the signal so it doesn't fire again
 
 
+# we are using the experimental Signal abstraction, which lets us hot reload the latest weights
+# without having to restart the inference service. It can be triggered with: experimental.Signal(name="reload-model")
 s = experimental.Signal(
     name="reload-model",
     handler=load_finetuned_model,
@@ -50,6 +64,7 @@ s = experimental.Signal(
         python_version="python3.9",
         python_packages=["transformers==4.42.0", "torch", "peft"],
     ),
+    # this autoscaler will spawn new containers (up to 5) if the queue depth for tasks exceeds 1
     autoscaler=QueueDepthAutoscaler(max_containers=5, tasks_per_container=1),
 )
 def predict(**inputs):
@@ -74,18 +89,10 @@ def predict(**inputs):
         eos_token_id=stop_token_ids[-1],
         pad_token_id=tokenizer.eos_token_id,
     )
-    # note that here we are trimming the input length from the output so that
-    # only the newly generated text is returned
+    # here we are trimming the input length from the output so that only the newly generated text is returned
     text = tokenizer.decode(output[0][len(inputs[0]) :])
     print(text)
 
-    # note that the stop sequence is in the output. in a realistic scenario you would
-    # probably have some service that is tracking the conversation and would remove
-    # the stop sequence from the output before returning it to the user. it might also
-    # be storing the conversation history so that the model can continue the conversation
-    # (could potentially be a nice usecase for Maps if you want long conversations without
-    # having the front end send the entire conversation history each time; assuming you
-    # dont need long term durability of the conversation history)
     return {"text": text}
 
 
