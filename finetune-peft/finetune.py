@@ -1,6 +1,7 @@
 from beam import Volume, Image, function
 
 
+# The mount path is the location on the beam volume that we will access. 
 MOUNT_PATH = "./gemma-ft"
 WEIGHT_PATH = "./gemma-ft/weights"
 OPEN_ASSISTANT_DATASET_PATH = "./gemma-ft/data/oa.jsonl"
@@ -12,7 +13,7 @@ OPEN_ASSISTANT_DATASET_PATH = "./gemma-ft/data/oa.jsonl"
         python_packages=["transformers", "torch", "datasets", "peft", "bitsandbytes"]
     ),
     gpu="A100-40",
-    cpu=1,
+    cpu=4,
 )
 def gemma_fine_tune():
     import os
@@ -68,7 +69,7 @@ def gemma_fine_tune():
     )
 
     training_args = TrainingArguments(
-        # this output directory is on our mounted volume
+        # This output directory is on our mounted volume
         output_dir="./gemma-ft/gemma-2b-finetuned",
         num_train_epochs=1,
         per_device_train_batch_size=4,
@@ -92,7 +93,7 @@ def gemma_fine_tune():
 
     trainer.train()
 
-    # saving the LORA model and tokenizer to our mounted volume so that our inference endpoint can access it
+    # Saving the LORA model and tokenizer to our mounted volume so that our inference endpoint can access it.
     model.save_pretrained("./gemma-ft/gemma-2b-finetuned")
     tokenizer.save_pretrained("./gemma-ft/gemma-2b-finetuned")
 
