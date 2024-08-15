@@ -22,6 +22,8 @@ No surprise here, but we are getting our compute via Beam. We are using the `fun
 ```
 One interesting thing to note above is that we are mounting a volume to our container. This volume is where we have uploaded our intial weights from hugging face and our training dataset. It is also where we will store our additional fine-tuned weights. 
 
+We can start our training by running `python finetune.py`.
+
 ## Inference
 In `inference.py`, we are loading up our model with the additional fine-tuned weights and setting up an endpoint to send it requests. Note, that we make use of the Beam's `on_start` functionality so that we only load the model when the container starts instead of every time we receive a request. Let's explore the `endpoint` decorator below. 
 ```python
@@ -46,3 +48,10 @@ Now that we've trained the model, we can run it on a machine with a weaker GPU. 
 
 ### Using signals to reload model weights
 We are also making use of a new experimental feature calls `Signal`. This allows us to communicate between apps on Beam. In this example, we have it setup to re-run our on-start method when a signal is received. This way, if we re-train our model, we can load the newest weights without restarting the container.  
+
+### Deploying our endpoint
+Let's deploy our endpoint! We can do this easily with the `beam` cli. 
+```
+beam deploy inference.py:predict --name gemma-ft
+```
+The output will include a url which you can use to invoke the predict function. 
