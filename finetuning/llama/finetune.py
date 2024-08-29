@@ -1,5 +1,5 @@
 # finetune.py
-# Deploy to beam by running `$ python finetune.py` in the terminal
+# Deploy to beam by running `$ beam deploy finetune.py:llama_fine_tune` in the terminal
 
 from beam import Volume, Image, function
 
