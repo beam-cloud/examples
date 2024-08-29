@@ -1,3 +1,5 @@
+# Fine-Tuning Llama3 with LoRA and Beam
+
 Let’s say you want to fine-tune llama3. By running PEFT LoRA fine-tuning on a dataset with a few thousand rows in it, you can dramatically increase the accuracy of your model’s responses, and if you use Beam for compute, you can accomplish it in 1 hour rather than 10.
 
 ## Setup Beam and Llama3 model
@@ -14,7 +16,11 @@ Next, you need the weights of the Llama3 base model to begin fine-tuning them. G
 
 1. Upload the weights and dataset to a Beam Volume
 
-Finally, upload the weights and your fine-tuning dataset to a Beam Volume using the following CLI commands.
+Finally, upload the weights and your fine-tuning dataset to a Beam Volume. 
+
+To create a fine-tuning dataset, you need a collection of input-output pairs, formatted as a CSV, JSON, or text file, where each entry provides an example of what the model should predict given a specific input. Reference [these examples](https://github.com/meta-llama/llama-recipes/tree/main/recipes/quickstart/finetuning/datasets) from Meta for Llama3 formatting. 
+
+Once you have your fine-tuning dataset, use the following CLI commands.
 
 ```bash
 // using weights as the Volume name
@@ -34,7 +40,6 @@ $ beam cp local_dataset llama-ft/data
 We will be leveraging the `transfomers` and `peft` packages to run LoRA PEFT fine-tuning, with the same Python as you would for a local run. Here is the default configuration we will be working with.
 
 ```bash
-# finetune.py
 
 def llama_fine_tune():
     import os
@@ -331,6 +336,6 @@ which could return:
 
 https://llama.meta.com/docs/how-to-guides/fine-tuning/
 
-[llama.meta.com/llama-downloads/](https://llama.meta.com/llama-downloads/) 
+https://github.com/meta-llama/llama-recipes/tree/main/recipes/quickstart/finetuning/datasets
 
 https://docs.beam.cloud/v2/examples/gemma-fine-tune
