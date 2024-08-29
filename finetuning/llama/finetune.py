@@ -1,4 +1,6 @@
 # finetune.py
+# Deploy to beam by running `$ python finetune.py` in the terminal
+
 from beam import Volume, Image, function
 
 # The mount path is the location on the beam volume that we will access. 
@@ -15,7 +17,6 @@ OPEN_ASSISTANT_DATASET_PATH = "./llama-ft/data/oa.jsonl"
     gpu="A100-40",
     cpu=4,
 )
-# finetune.py
 
 def llama_fine_tune():
     import os
