@@ -1,4 +1,6 @@
 # inference.py
+# Deploy to beam by running `$ python inference.py` in the terminal
+
 from beam import Image, endpoint, env, Volume, QueueDepthAutoscaler, experimental
 
 MOUNT_PATH = "./llama-ft"
