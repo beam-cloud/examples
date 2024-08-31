@@ -291,7 +291,7 @@ if __name__ == "__main__":
 
 1. Deploy the endpoint and make API calls
 
-Finally, it’s time to deploy our endpoint! Just run `$ beam deploy [inference.py](http://inference.py/):predict --name llama-ft` and you will get an output like:
+Finally, it’s time to deploy our endpoint! Last time, we were running a one-off function, so it was enough to call the script using `python finetune.py`. But we want to set up a persistent endpoint, so we run `$ beam deploy [inference.py](http://inference.py/):predict --name llama-ft` to receive an output like:
 
 ```bash
 => Building image
