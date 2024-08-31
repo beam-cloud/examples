@@ -57,7 +57,7 @@ def llama_fine_tune():
 
     model = get_peft_model(model, lora_config)
 
-    # Load the Yelp Reviews dataset from Hugging Face
+    # Load the dataset
     dataset = load_dataset(DATASET_PATH)
 
     def prepare_dataset(examples):
