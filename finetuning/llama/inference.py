@@ -1,5 +1,5 @@
 # inference.py
-# Deploy to beam by running `$ beam deploy inference.py:predict` in the terminal
+# Deploy to beam by running `$ beam deploy inference.py:predict --name llama-ft` in the terminal
 
 from beam import Image, endpoint, env, Volume, QueueDepthAutoscaler, experimental
 
