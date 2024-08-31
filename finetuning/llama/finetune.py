@@ -1,10 +1,11 @@
 # finetune.py
-# Deploy to beam by running `$ python finetune.py` in the terminal# finetune.py
+# Deploy to beam by running `$ python finetune.py` in the terminal
 from beam import Volume, Image, function, env
 
 # The mount path is the location on the beam volume that we will access. 
 MOUNT_PATH = "./llama-ft"
-WEIGHT_PATH = "meta-llama/Meta-Llama-3.1-8B"
+WEIGHT_PATH = "./llama-ft/weights"
+DATASET_PATH = "./llama-ft/data"
 
 @function(
     secrets=["HF_TOKEN"],
@@ -57,7 +58,7 @@ def llama_fine_tune():
     model = get_peft_model(model, lora_config)
 
     # Load the Yelp Reviews dataset from Hugging Face
-    dataset = load_dataset("yelp_review_full")
+    dataset = load_dataset(DATASET_PATH)
 
     def prepare_dataset(examples):
         return tokenizer(examples["text"], padding="max_length", truncation=True)
