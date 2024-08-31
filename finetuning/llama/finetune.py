@@ -1,15 +1,13 @@
 # finetune.py
-# Deploy to beam by running `$ beam deploy finetune.py:llama_fine_tune` in the terminal
-
-from beam import Volume, Image, function
+# Deploy to beam by running `$ python finetune.py` in the terminal# finetune.py
+from beam import Volume, Image, function, env
 
 # The mount path is the location on the beam volume that we will access. 
 MOUNT_PATH = "./llama-ft"
-WEIGHT_PATH = "./llama-ft/weights"
-OPEN_ASSISTANT_DATASET_PATH = "./llama-ft/data/oa.jsonl"
-
+WEIGHT_PATH = "meta-llama/Meta-Llama-3.1-8B"
 
 @function(
+    secrets=["HF_TOKEN"],
     volumes=[Volume(name="llama-ft", mount_path=MOUNT_PATH)],
     image=Image(
         python_packages=["transformers", "torch", "datasets", "peft", "bitsandbytes"]
@@ -17,7 +15,6 @@ OPEN_ASSISTANT_DATASET_PATH = "./llama-ft/data/oa.jsonl"
     gpu="A100-40",
     cpu=4,
 )
-
 def llama_fine_tune():
     import os
     import torch
@@ -40,9 +37,13 @@ def llama_fine_tune():
 
     # Load the Llama3 model and tokenizer
     model = AutoModelForCausalLM.from_pretrained(
-        WEIGHT_PATH, model_type="llama", device_map="auto", attn_implementation="eager", use_cache=False
+        WEIGHT_PATH, device_map="auto", attn_implementation="eager", use_cache=False
     )
     tokenizer = AutoTokenizer.from_pretrained(WEIGHT_PATH, use_fast=False)
+    
+    # Set the pad_token to eos_token
+    tokenizer.pad_token = tokenizer.eos_token
+
 
     lora_config = LoraConfig(
         r=16,
@@ -54,23 +55,14 @@ def llama_fine_tune():
     )
 
     model = get_peft_model(model, lora_config)
-    dataset = load_dataset("json", data_files=OPEN_ASSISTANT_DATASET_PATH)
+
+    # Load the Yelp Reviews dataset from Hugging Face
+    dataset = load_dataset("yelp_review_full")
 
     def prepare_dataset(examples):
-        conversations = examples["text"]
-        tokenized = tokenizer(
-            conversations, truncation=True, padding="max_length", max_length=512
-        )
-        tokenized["labels"] = tokenized["input_ids"].copy()
-        for i, labels in enumerate(tokenized["labels"]):
-            tokenized["labels"][i] = [-100] + labels[
-                :-1
-            ]  # -100 is the ignore index for CrossEntropyLoss
-        return tokenized
+        return tokenizer(examples["text"], padding="max_length", truncation=True)
 
-    tokenized_dataset = dataset.map(
-        prepare_dataset, batched=True, remove_columns=dataset["train"].column_names
-    )
+    tokenized_dataset = dataset.map(prepare_dataset, batched=True)
 
     training_args = TrainingArguments(
         # This output directory is on our mounted volume
@@ -91,7 +83,7 @@ def llama_fine_tune():
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=tokenized_dataset["train"],
+        train_dataset=tokenized_dataset,
         data_collator=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False),
     )
 
@@ -101,5 +93,6 @@ def llama_fine_tune():
     model.save_pretrained("./llama-ft/llama-finetuned")
     tokenizer.save_pretrained("./llama-ft/llama-finetuned")
 
-if __name__ == "__main__":
+
+if __name__ == "__main__":\
     llama_fine_tune.remote()
