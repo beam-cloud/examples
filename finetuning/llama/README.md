@@ -16,7 +16,7 @@ Next, you need the weights of the Llama3 base model to begin fine-tuning them. G
 
 1. Upload the weights and dataset to a Beam Volume
 
-Finally, upload the weights and your fine-tuning dataset to a Beam Volume. 
+Finally, upload the weights and your fine-tuning dataset to a Beam Volume.
 
 To create a fine-tuning dataset, you need a collection of input-output pairs, formatted as a CSV, JSON, or text file, where each entry provides an example of what the model should predict given a specific input. Reference [these examples](https://github.com/meta-llama/llama-recipes/tree/main/recipes/quickstart/finetuning/datasets) from Meta for Llama3 formatting. 
 
@@ -40,7 +40,7 @@ $ beam cp local_dataset llama-ft/data
 We will be leveraging the `transfomers` and `peft` packages to run LoRA PEFT fine-tuning, with the same Python as you would for a local run. Here is the default configuration we will be working with.
 
 ```bash
-
+# finetune.py
 def llama_fine_tune():
     import os
     import torch
@@ -63,9 +63,13 @@ def llama_fine_tune():
 
     # Load the Llama3 model and tokenizer
     model = AutoModelForCausalLM.from_pretrained(
-        WEIGHT_PATH, model_type="llama", device_map="auto", attn_implementation="eager", use_cache=False
+        WEIGHT_PATH, device_map="auto", attn_implementation="eager", use_cache=False
     )
     tokenizer = AutoTokenizer.from_pretrained(WEIGHT_PATH, use_fast=False)
+    
+    # Set the pad_token to eos_token
+    tokenizer.pad_token = tokenizer.eos_token
+
 
     lora_config = LoraConfig(
         r=16,
@@ -77,23 +81,14 @@ def llama_fine_tune():
     )
 
     model = get_peft_model(model, lora_config)
-    dataset = load_dataset("json", data_files=OPEN_ASSISTANT_DATASET_PATH)
+
+    # Load the Yelp Reviews dataset from Hugging Face
+    dataset = load_dataset(DATASET_PATH)
 
     def prepare_dataset(examples):
-        conversations = examples["text"]
-        tokenized = tokenizer(
-            conversations, truncation=True, padding="max_length", max_length=512
-        )
-        tokenized["labels"] = tokenized["input_ids"].copy()
-        for i, labels in enumerate(tokenized["labels"]):
-            tokenized["labels"][i] = [-100] + labels[
-                :-1
-            ]  # -100 is the ignore index for CrossEntropyLoss
-        return tokenized
+        return tokenizer(examples["text"], padding="max_length", truncation=True)
 
-    tokenized_dataset = dataset.map(
-        prepare_dataset, batched=True, remove_columns=dataset["train"].column_names
-    )
+    tokenized_dataset = dataset.map(prepare_dataset, batched=True)
 
     training_args = TrainingArguments(
         # This output directory is on our mounted volume
@@ -114,7 +109,7 @@ def llama_fine_tune():
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=tokenized_dataset["train"],
+        train_dataset=tokenized_dataset,
         data_collator=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False),
     )
 
@@ -123,7 +118,6 @@ def llama_fine_tune():
     # Saving the LORA model and tokenizer to our mounted volume so that our inference endpoint can access it.
     model.save_pretrained("./llama-ft/llama-finetuned")
     tokenizer.save_pretrained("./llama-ft/llama-finetuned")
-
 ```
 
 1. Configure Beam
@@ -132,14 +126,16 @@ That’s all set to run locally, but it would take hours and hours on consumer h
 
 ```bash
 # finetune.py
-from beam import Volume, Image, function
+# Deploy to beam by running `$ python finetune.py` in the terminal
+from beam import Volume, Image, function, env
 
 # The mount path is the location on the beam volume that we will access. 
 MOUNT_PATH = "./llama-ft"
 WEIGHT_PATH = "./llama-ft/weights"
-OPEN_ASSISTANT_DATASET_PATH = "./llama-ft/data/oa.jsonl"
+DATASET_PATH = "./llama-ft/data"
 
 @function(
+    secrets=["HF_TOKEN"],
     volumes=[Volume(name="llama-ft", mount_path=MOUNT_PATH)],
     image=Image(
         python_packages=["transformers", "torch", "datasets", "peft", "bitsandbytes"]
@@ -148,9 +144,9 @@ OPEN_ASSISTANT_DATASET_PATH = "./llama-ft/data/oa.jsonl"
     cpu=4,
 )
 def llama_fine_tune():
-   # This function is unchanged
+   # this is unchanged
 
-if __name__ == "__main__":
+if __name__ == "__main__":\
     llama_fine_tune.remote()
 ```
 
@@ -333,6 +329,7 @@ which could return:
 ```
 
 ### Useful Links
+https://huggingface.co/docs/transformers/en/training
 
 https://llama.meta.com/docs/how-to-guides/fine-tuning/
 
