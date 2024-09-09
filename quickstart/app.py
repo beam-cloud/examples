@@ -1,9 +1,11 @@
-from beam import endpoint
+from beam import function, Image
 
 
-@endpoint(name="quickstart", cpu="100m", memory="100Mi")
-def run():
-    print("🔮 This is running remotely on Beam!")
-    return {
-        "success": "Nice work! Check out the docs to continue: https://docs.beam.cloud/v2/getting-started/quickstart"
-    }
+@function(image=Image(python_packages=["numpy"]))
+def hello_world():
+    import numpy
+
+    return "I'm running in a remote container!"
+
+
+print(hello_world.remote())
