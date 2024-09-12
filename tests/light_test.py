@@ -8,8 +8,8 @@ import backoff
 
 WORKSPACE_ID = os.getenv("BEAM_WORKSPACE_ID")
 AUTH_TOKEN = os.getenv("BEAM_AUTH_TOKEN")
-GATEWAY_HOST = os.getenv("BEAM_GATEWAY_HOST")
-API_HOST = os.getenv("BEAM_API_HOST")
+GATEWAY_HOST = os.getenv("BEAM_GATEWAY_HOST", "app.beam.cloud")
+API_HOST = os.getenv("BEAM_API_HOST", "api.beam.cloud")
 
 curl_pattern = r"(curl -X POST.+\n(\s*-H .+\n)*\s*-d \'{.*?}\')"
 
