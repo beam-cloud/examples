@@ -17,7 +17,7 @@ def _create_config(token: str):
 
 def _create_beta9_script():
     # Create a script that can be run from the command line
-    script_path: Path = Path("/usr/local/bin/beta9")
+    script_path: Path = Path("/usr/local/bin/beam")
     script_path.parent.mkdir(parents=True, exist_ok=True)
     with open(script_path, "w+") as script_file:
         script_file.write("#!/bin/bash\n")

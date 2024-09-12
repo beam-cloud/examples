@@ -73,7 +73,7 @@ def test_quickstart():
 
     try:
         command = [
-            "beta9",
+            "beam",
             "deploy",
             "app.py:run",
             "--name",
@@ -104,7 +104,7 @@ def test_custom_image():
 
     try:
         command = [
-            "beta9",
+            "beam",
             "deploy",
             "app.py:handler",
             "--name",
@@ -137,7 +137,7 @@ def test_gpu_acceleration():
 
     try:
         command = [
-            "beta9",
+            "beam",
             "deploy",
             "app.py:handler",
             "--name",
@@ -187,7 +187,7 @@ def test_creating_endpoint():
 
     try:
         command = [
-            "beta9",
+            "beam",
             "deploy",
             "app.py:multiply",
             "--name",
@@ -220,7 +220,7 @@ def test_keep_warm():
 
     try:
         command = [
-            "beta9",
+            "beam",
             "deploy",
             "app.py:handler",
             "--name",
@@ -253,7 +253,7 @@ def test_preload_models():
 
     try:
         command = [
-            "beta9",
+            "beam",
             "deploy",
             "app.py:predict",
             "--name",
@@ -289,7 +289,7 @@ def test_task_queue():
 
     try:
         command = [
-            "beta9",
+            "beam",
             "deploy",
             "app.py:multiply",
             "--name",
