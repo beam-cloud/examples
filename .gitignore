@@ -1,7 +1,7 @@
-/**/*.beamignore
 .DS_Store
 __pycache__
 __downloads__
 .env
-.venv
+.venv/
 .vscode/launch.json
+.secrets

@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-beam-client = "^0.2.58"
+beam-client = "^0.2.74"
 pytest = "^8.3.2"
 numpy = "^2.0.1"
 transformers = "^4.43.3"
@@ -19,6 +19,7 @@ pillow = "^10.4.0"
 diffusers = "^0.29.2"
 backoff = "^2.2.1"
 pytest-xdist = "^3.6.1"
+slack-sdk = "^3.32.0"
 
 
 [tool.poetry.group.dev.dependencies]
