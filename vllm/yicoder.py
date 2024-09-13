@@ -25,7 +25,7 @@ vllm_cache = Volume(name="yicoder", mount_path="./yicoder")
 @asgi(
     image=Image().add_python_packages(["vllm"]),
     volumes=[vllm_cache],
-    gpu="A10G",
+    gpu="A100-40",
     memory="8Gi",
     cpu=1,
     keep_warm_seconds=360,
