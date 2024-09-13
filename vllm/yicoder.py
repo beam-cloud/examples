@@ -43,20 +43,22 @@ def yicoder_server():
 
     app.include_router(api_server.router)
 
+    # Create the engine client
     engine_args = AsyncEngineArgs(
         model=MODEL_NAME,
         max_model_len=8096,
         download_dir=vllm_cache.mount_path,
     )
-
     async_engine_client = AsyncLLMEngine.from_engine_args(
         engine_args, usage_context=UsageContext.OPENAI_API_SERVER
     )
 
     model_config = asyncio.run(async_engine_client.get_model_config())
 
+    # Optionally setup a request logger
     request_logger = RequestLogger(max_log_len=2048)
 
+    # Setup the OpenAI serving chat and completion endpoints
     api_server.openai_serving_chat = OpenAIServingChat(
         async_engine_client,
         model_config=model_config,
