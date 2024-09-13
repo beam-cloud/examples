@@ -1,8 +1,10 @@
 from beam import Image, Volume, env, function
 
+# These imports are only available in the remote environment
 if env.is_remote():
     from vllm import LLM
 
+# This beam volume is mounted as a file system and used to cache the downloaded model
 vllm_cache = Volume(name="yicoder", mount_path="./yicoder")
 
 

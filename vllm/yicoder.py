@@ -1,5 +1,6 @@
 from beta9 import Image, Volume, asgi, env
 
+# These imports are only available in the remote environment
 if env.is_remote():
     import asyncio
 
@@ -16,6 +17,8 @@ if env.is_remote():
     from vllm.usage.usage_lib import UsageContext
 
 MODEL_NAME = "01-ai/Yi-Coder-9B-Chat"
+
+# This beam volume is mounted as a file system and used to cache the downloaded model
 vllm_cache = Volume(name="yicoder", mount_path="./yicoder")
 
 
