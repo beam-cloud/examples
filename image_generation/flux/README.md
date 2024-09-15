@@ -6,5 +6,5 @@ Here's how to run serverless inference with Flux.
 
 0. Setup Beam on your computer by following the steps [here](platform.beam.cloud/onboarding).
 1. Save your [Huggingface API key](https://huggingface.co/settings/tokens) to Beam: `beam secret create HF_TOKEN [YOUR-HF-TOKEN]`
-2. Download this example to your computer: `beam example download image_generation/flux && cd mage_generation/flux`
+2. Download this example to your computer: `beam example download image_generation/flux && cd image_generation/flux`
 3. Deploy it to Beam: `beam deploy app.py:generate`
