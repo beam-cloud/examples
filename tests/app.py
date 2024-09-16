@@ -26,7 +26,7 @@ def _create_beta9_script():
     
 
 @schedule(
-    "0 */6 * * *",
+    "0 2,14,19 * * 1-5",
     secrets=["BEAM_WORKSPACE_ID", "BEAM_AUTH_TOKEN", "BEAM_GATEWAY_HOST", "BEAM_API_HOST", "SLACK_WEBHOOK_URL", "pillow"],
     image=Image(
         python_packages=["slack-sdk", "pytest", "requests", "backoff", "numpy"],
