@@ -1,5 +1,5 @@
 # invoke.py
-# Run this scrip to make an API request to the endpoint we created
+# Run this script to make an API request to the endpoint we created
 
 import requests
 import json
