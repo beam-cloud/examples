@@ -32,7 +32,7 @@ def load_models():
 
     # Load model
     pipe = FluxPipeline.from_pretrained(
-        "black-forest-labs/FLUX.1-dev", torch_dtype=torch.bfloat16
+        "black-forest-labs/FLUX.1-dev", torch_dtype=torch.bfloat16, cache_dir=CACHE_PATH
     )
     pipe.enable_model_cpu_offload()  # save some VRAM by offloading the model to CPU. Remove this if you have enough GPU power
 
