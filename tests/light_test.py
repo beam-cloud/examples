@@ -8,6 +8,8 @@ import backoff
 
 WORKSPACE_ID = os.getenv("BEAM_WORKSPACE_ID")
 AUTH_TOKEN = os.getenv("BEAM_AUTH_TOKEN")
+GATEWAY_HOST = os.getenv("BEAM_GATEWAY_HOST", "app.beam.cloud")
+API_HOST = os.getenv("BEAM_API_HOST", "api.beam.cloud")
 
 curl_pattern = r"(curl -X POST.+\n(\s*-H .+\n)*\s*-d \'{.*?}\')"
 
@@ -36,7 +38,7 @@ def parse_curl(curl_command):
 
 def delete_deployments(deployment_name):
     res = requests.get(
-        f"https://app.beam.cloud/api/v1/deployment/{WORKSPACE_ID}?name={deployment_name}&limit={100}",
+        f"https://{GATEWAY_HOST}/api/v1/deployment/{WORKSPACE_ID}?name={deployment_name}&limit={100}",
         headers={
             "Content-Type": "application/json",
             "Authorization": "Bearer " + AUTH_TOKEN,
@@ -48,7 +50,7 @@ def delete_deployments(deployment_name):
         for d in res:
             d_id = d["external_id"]
             requests.delete(
-                f"https://app.beam.cloud/api/v1/deployment/{WORKSPACE_ID}/{d_id}",
+                f"https://{GATEWAY_HOST}/api/v1/deployment/{WORKSPACE_ID}/{d_id}",
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": "Bearer " + AUTH_TOKEN,
@@ -317,7 +319,7 @@ def test_task_queue():
             @backoff.on_predicate(backoff.expo, predicate=lambda x: x['status'] == 'PENDING', max_tries=10)
             def get_task_status(task_id, auth_token):
                 response = requests.get(
-                    f"https://api.beam.cloud/v2/task/{task_id}/",
+                    f"https://{API_HOST}/v2/task/{task_id}/",
                     headers={
                         "Content-Type": "application/json",
                         "Authorization": f"Bearer {auth_token}",
