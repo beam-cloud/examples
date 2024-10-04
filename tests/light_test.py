@@ -75,7 +75,7 @@ def test_quickstart():
         command = [
             "beam",
             "deploy",
-            "app.py:run",
+            "app.py:hello_world",
             "--name",
             deployment_name,
         ]
@@ -91,7 +91,7 @@ def test_quickstart():
             assert (
                 response.status_code == 200
             ), f"{test_name} request to endpoint failed with status code: {response.status_code}"
-            assert "success" in response.text, f"{test_name} unexpected response"
+            assert "task_id" in response.text, f"{test_name} unexpected response"
     finally:
         delete_deployments(deployment_name)
         os.chdir(current_dir)
