@@ -22,11 +22,11 @@ export default function Home() {
       if (debouncedText) {
         try {
           const response = await fetch(
-            process.env.BEAM_API_URL,
+            process.env.NEXT_PUBLIC_BEAM_API_URL,
             {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${process.env.BEAM_AUTH_TOKEN}`,
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_BEAM_AUTH_TOKEN}`,
                 'Connection': 'keep-alive',
                 'Content-Type': 'application/json'
               },
