@@ -1,7 +1,9 @@
-In this example we are fine tuning gemma 2B using LORA. We will do this via huggingface's PEFT
-library.
-https://huggingface.co/google/gemma-2b
-https://huggingface.co/docs/peft/index
-The dataset being used is open assistant. 
-https://huggingface.co/datasets/OpenAssistant/oasst1
-This is a dataset of high quality user-assistant conversations. 
+<p align="center">
+<img alt="Logo" src="https://slai-demo-datasets.s3.amazonaws.com/beam-banner.svg"/ width="500">
+</p>
+
+# Get Started
+
+The `examples` folder in this repo contains various examples of programs built with Beam.
+
+You can run any of these examples yourself. All you need is a free account on [Beam](https://beam.cloud).
