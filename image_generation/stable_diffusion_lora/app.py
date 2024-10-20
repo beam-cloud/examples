@@ -49,6 +49,7 @@ def load_models():
 
 
 @endpoint(
+    name="sd-lora",
     image=image,
     on_start=load_models,
     keep_warm_seconds=60,
