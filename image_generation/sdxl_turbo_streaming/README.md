@@ -24,7 +24,7 @@ This app generates images with SDXL Turbo in streaming mode.
 Configuration steps:
 
 1. `cd frontend`
-2. Create a `.env` file with your beam key in the enviornment variables `BEAM_AUTH_BEARER` and `BEAM_API_URL`
+2. Create a `.env` file with your beam key in the enviornment variables `NEXT_PUBLIC_BEAM_AUTH_TOKEN` and `NEXT_PUBLIC_BEAM_API_URL`
 
 Running steps:
 

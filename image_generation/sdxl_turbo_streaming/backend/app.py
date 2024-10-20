@@ -18,7 +18,7 @@ def load_models():
     import torch
 
     pipe = AutoPipelineForText2Image.from_pretrained(
-        BASE_MODEL, torch_dtype=torch.float16, variant="fp16"
+        BASE_MODEL, torch_dtype=torch.float16, variant="fp16", cache_dir=CACHE_PATH
     )
     pipe.to("cuda")
 
@@ -26,7 +26,7 @@ def load_models():
 
 
 @endpoint(
-    name="sdxl-turbo-streamming",
+    name="sdxl-turbo-streaming",
     image=image,
     on_start=load_models,
     keep_warm_seconds=60,
