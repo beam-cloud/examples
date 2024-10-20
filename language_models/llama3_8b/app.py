@@ -15,17 +15,15 @@ REPETITION_PENALTY = 1.0
 NO_REPEAT_NGRAM_SIZE = 0
 DO_SAMPLE = True
 
-BEAM_VOLUME_PATH = "./cached_models"
+CACHE_PATH = "./cached_models"
 
 
 # This runs once when the container first starts
 def load_models():
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, cache_dir=CACHE_PATH)
     tokenizer.pad_token = tokenizer.eos_token
     model = AutoModelForCausalLM.from_pretrained(
-        MODEL_NAME,
-        device_map="auto",
-        torch_dtype=torch.float16,
+        MODEL_NAME, device_map="auto", torch_dtype=torch.float16, cache_dir=CACHE_PATH
     )
     return model, tokenizer
 
@@ -44,7 +42,7 @@ def load_models():
     volumes=[
         Volume(
             name="cached_models",
-            mount_path=BEAM_VOLUME_PATH,
+            mount_path=CACHE_PATH,
         )
     ],
 )
