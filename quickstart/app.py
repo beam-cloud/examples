@@ -2,7 +2,7 @@ from beam import endpoint, Image
 
 
 @endpoint(
-    name="inference",
+    name="quickstart",
     cpu=1,
     memory="1Gi",
     image=Image().add_python_packages(["numpy"]),
