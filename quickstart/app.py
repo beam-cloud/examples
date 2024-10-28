@@ -1,7 +1,12 @@
-from beam import function, Image
+from beam import endpoint, Image
 
 
-@function(image=Image(python_packages=["numpy"]))
-def hello_world():
-    import numpy
-    return "I'm running in a remote container!"
+@endpoint(
+    name="quickstart",
+    cpu=1,
+    memory="1Gi",
+    image=Image().add_python_packages(["numpy"]),
+)
+def predict(**inputs):
+    x = inputs.get("x", 256)
+    return {"result": x**2}
