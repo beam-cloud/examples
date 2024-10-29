@@ -1,0 +1,16 @@
+{
+  "name": "beam-express-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@beamcloud/beam-js": "0.0.15",
+    "express": "^4.21.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.4"
+  }
+}
