@@ -1,5 +1,5 @@
 const express = require("express");
-const beam = require("@beamcloud/beam-js").default;
+const beam = require("@beamcloud/beam-js");
 const app = express();
 const port = 3333;
 
