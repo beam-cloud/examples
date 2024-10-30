@@ -1104,10 +1104,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@beamcloud/beam-js@0.0.16":
-  version "0.0.16"
-  resolved "https://registry.yarnpkg.com/@beamcloud/beam-js/-/beam-js-0.0.16.tgz#3d0f4ecf7ac5968e7b4a96f3e89e7d66a0754ffb"
-  integrity sha512-AjNuYlywg1vORZamKppxao1nmfMdHAhaiQnWq62ey83c2xrrdaVE8ZVRmY66l0faLPiZOZ4kT2Etu9RQQMB1ug==
+"@beamcloud/beam-js@0.0.21":
+  version "0.0.21"
+  resolved "https://registry.yarnpkg.com/@beamcloud/beam-js/-/beam-js-0.0.21.tgz#e3d6532cfbdbd5acfbd611660c8bf9f0a9bd5a72"
+  integrity sha512-GUJgB/JSxBtUjBN/td85TEqrpUwWvzTkFDuUnVWfSmobxM245+wAPWC3lXXNgfV5TYS5YsLsUf9xBH0Stmm/Hw==
   dependencies:
     axios "^1.7.7"
     commander "^12.1.0"
