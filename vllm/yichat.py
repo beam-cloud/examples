@@ -3,7 +3,7 @@ from openai import OpenAI
 
 def chat_with_gpt():
     openai_completions_api_version = "v1"
-    beam_deployment_url = "https://app.beam.cloud/asgi/yicoder-server/v1"
+    beam_deployment_url = "https://yicoder-vllm-ea7443c-latest.app.beam.cloud"
 
     client = OpenAI(
         api_key="YOUR_BEAM_TOKEN",
