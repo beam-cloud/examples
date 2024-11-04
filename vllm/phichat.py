@@ -1,7 +1,6 @@
 from openai import OpenAI
 
-# Modify OpenAI's API key and API base to use vLLM's API server.
-openai_api_key = "2JudUv8cSc3FZugDh9FuV7fOYWqLeVCzGPbCkv9p9yqCu8ulkTk0KXU3GpcdY4EY3RNUtvC5c1-RE765QTCoPg=="
+openai_api_key = "YOUR_BEAM_TOKEN"
 openai_api_base = "https://phi-vllm-c992edf-latest.app.beam.cloud"
 openai_api_version = "v1"
 
