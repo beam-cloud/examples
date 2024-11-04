@@ -22,3 +22,28 @@ Once the server is deployed, you can use the `yichat.py` script to chat with the
 ```bash
 python yichat.py
 ```
+
+## Multi-modal inference
+
+We can deploy a multi-modal model like Phi-3.5-vision-instruct. The `phi.py` script demonstrates how to do this.
+
+```bash
+beam deploy phi.py:phi
+```
+
+Once the server is deployed, you can use the `phichat.py` script to chat with the model.
+
+```bash
+python phichat.py
+```
+
+You can have a conversation like this:
+
+```bash
+Welcome to the CLI Chat Application!
+Type 'quit' to exit the conversation. Image link is optional.
+Model is ready
+Question: What kind've animal is this? 
+Image link: https://upload.wikimedia.org/wikipedia/commons/b/b2/Endangered_Red_Panda.jpg
+Assistant:  It's a red panda.
+```
