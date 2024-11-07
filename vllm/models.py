@@ -1,4 +1,4 @@
-from beam import VLLM, VLLMArgs
+from beam.integrations import VLLM, VLLMArgs
 
 PHI_VISION_INSTRUCT = "microsoft/Phi-3.5-vision-instruct"
 YI_CODER_CHAT = "01-ai/Yi-Coder-9B-Chat"
