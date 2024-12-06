@@ -11,14 +11,14 @@ python inference.py
 
 ## Deploying OpenAI-compatible APIs
 
-Using `model.py`, we can deploy OpenAI-compatible APIs for three different LLMs. To do this, we use the `VLLM` wrapper class from the Beam SDK. Any command line argument that could be passed when calling `vllm serve` can be passed to the wrapper class via the `vllm_args` field. 
+Using `models.py`, we can deploy OpenAI-compatible APIs for three different LLMs. To do this, we use the `VLLM` wrapper class from the Beam SDK. Any command line argument that could be passed when calling `vllm serve` can be passed to the wrapper class via the `vllm_args` field. 
 
 The models can be deployed like this: 
 
 ```bash
-beam deploy model.py:phi_vision_instruct
-beam deploy model.py:yicoder_chat
-beam deploy model.py:mistral_instruct
+beam deploy models.py:phi_vision_instruct
+beam deploy models.py:yicoder_chat
+beam deploy models.py:mistral_instruct
 ```
 
 Each of these models supports different features. The `phi_vision_instruct` model supports multi-modal inference, the `yicoder_chat` model supports chat inference, and the `mistral_instruct` model supports chat inference with tool calling. 
