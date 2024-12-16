@@ -1,4 +1,6 @@
-from beam import endpoint, env, Image, Output
+from beam import endpoint, env, Volume, Image, Output
+
+VOLUME_PATH = "./mochi-1-preview"
 
 if env.is_remote():
     import torch
@@ -8,8 +10,8 @@ if env.is_remote():
  
 def load_models():
     pipe = MochiPipeline.from_pretrained(
-        "genmo/mochi-1-preview", variant="bf16", torch_dtype=torch.bfloat16)
-    return pipe
+        f"{VOLUME_PATH}/weights", variant="bf16", torch_dtype=torch.bfloat16)
+    return pipe 
 
 
 mochi_image = (
@@ -21,7 +23,6 @@ mochi_image = (
     .add_commands(["apt update && apt install git -y", "pip install git+https://github.com/huggingface/diffusers.git"])
 )
 
-
 @endpoint(
     name="mochi-1-preview",
     on_start=load_models,
@@ -30,6 +31,7 @@ mochi_image = (
     gpu="A10G",
     gpu_count=2,
     image=mochi_image,
+    volumes=[Volume(name="mochi-1-preview", mount_path=VOLUME_PATH)],
     timeout=-1
 )
 def generate_video(context, **inputs):
@@ -50,6 +52,6 @@ def generate_video(context, **inputs):
 
     output_file = Output(path=file_name)
     output_file.save()
-    public_url = output_file.public_url(expires=12000)
+    public_url = output_file.public_url(expires=-1)
     print(public_url)
     return {"output_url": public_url}
