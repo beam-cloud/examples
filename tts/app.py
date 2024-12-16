@@ -14,7 +14,6 @@ def load_models():
 
 parlertts_image = (
     Image(
-        base_image="nvidia/cuda:12.2.0-devel-ubuntu22.04",
         python_version="python3.10",
         python_packages=["torch", "transformers", "soundfile", "Pillow", "wheel", "packaging", "ninja"]
     )
@@ -56,6 +55,6 @@ def generate_speech(context, **inputs):
    
     output_file = Output(path=file_name)
     output_file.save()
-    public_url = output_file.public_url(expires=400)
+    public_url = output_file.public_url(expires=1200000000)
     print(public_url)
     return {"output_url": public_url}
