@@ -1,19 +1,25 @@
 from beam.integrations import VLLM, VLLMArgs
+from beam import Image
 
-PHI_VISION_INSTRUCT = "microsoft/Phi-3.5-vision-instruct"
+MODEL = "OpenGVLab/InternVL2_5-8B"
 YI_CODER_CHAT = "01-ai/Yi-Coder-9B-Chat"
 MISTRAL_INSTRUCT = "mistralai/Mistral-7B-Instruct-v0.3"
 
-phi_vision_instruct = VLLM(
-    name=PHI_VISION_INSTRUCT.split("/")[-1],
+MODEL = "OpenGVLab/InternVL2_5-8B"
+
+internvl = VLLM(
+    name=MODEL.split("/")[-1],
     cpu=8,
-    memory="16Gi",
-    gpu="A100-40",
+    memory="32Gi",
+    gpu="A10G",
+    gpu_count=2,
+    image=(Image(python_version="python3.12", python_packages=["vllm==0.6.4.post1"])),
     vllm_args=VLLMArgs(
-        model=PHI_VISION_INSTRUCT,
-        served_model_name=[PHI_VISION_INSTRUCT],
+        model=MODEL,
+        served_model_name=[MODEL],
         trust_remote_code=True,
         max_model_len=4096,
+        gpu_memory_utilization=0.95,
         limit_mm_per_prompt={"image": 2},
     ),
 )
