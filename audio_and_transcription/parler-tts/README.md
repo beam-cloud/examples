@@ -23,7 +23,7 @@ Send a `POST` request with the following JSON payload:
 
 ```json
 {
-    "prompt": "On Beam run AI workloads anywhere with zero complexity. One line of Python, global GPUs, full control!!!",
+    "prompt": "On Beam run AI workloads anywhere with zero complexity. One line of Python, global GPUs, full control",
     "description": "A female speaker delivers a slightly expressive and animated speech with a moderate speed and pitch. The recording is of very high quality, with the speaker's voice sounding clear and very close up."
 }
 ```

@@ -1,22 +1,20 @@
 from beam.integrations import VLLM, VLLMArgs
 from beam import Image
 
-MODEL = "OpenGVLab/InternVL2_5-8B"
+INTERNVL2_5 = "OpenGVLab/InternVL2_5-8B"
 YI_CODER_CHAT = "01-ai/Yi-Coder-9B-Chat"
 MISTRAL_INSTRUCT = "mistralai/Mistral-7B-Instruct-v0.3"
 
-MODEL = "OpenGVLab/InternVL2_5-8B"
-
 internvl = VLLM(
-    name=MODEL.split("/")[-1],
+    name=INTERNVL2_5.split("/")[-1],
     cpu=8,
     memory="32Gi",
     gpu="A10G",
     gpu_count=2,
     image=(Image(python_version="python3.12", python_packages=["vllm==0.6.4.post1"])),
     vllm_args=VLLMArgs(
-        model=MODEL,
-        served_model_name=[MODEL],
+        model=INTERNVL2_5,
+        served_model_name=[INTERNVL2_5],
         trust_remote_code=True,
         max_model_len=4096,
         gpu_memory_utilization=0.95,
