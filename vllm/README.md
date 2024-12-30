@@ -16,12 +16,12 @@ Using `models.py`, we can deploy OpenAI-compatible APIs for three different LLMs
 The models can be deployed like this: 
 
 ```bash
-beam deploy models.py:phi_vision_instruct
+beam deploy models.py:internvl
 beam deploy models.py:yicoder_chat
 beam deploy models.py:mistral_instruct
 ```
 
-Each of these models supports different features. The `phi_vision_instruct` model supports multi-modal inference, the `yicoder_chat` model supports chat inference, and the `mistral_instruct` model supports chat inference with tool calling. 
+Each of these models supports different features. The `internvl` model supports multi-modal inference, the `yicoder_chat` model supports chat inference, and the `mistral_instruct` model supports chat inference with tool calling. 
 
 To demonstrate how to use these APIs, we have provided a simple chat client in `chat.py`. This script will allow you to chat with each of the deployed models. 
 
@@ -34,8 +34,8 @@ When you run this script, you will be prompted to enter the url of beam deployme
 ```bash
 Welcome to the CLI Chat Application!
 Type 'quit' to exit the conversation.
-Enter the app URL: https://phi-3-5-vision-instruct-15c4487-v1.app.beam.cloud
-Model microsoft/Phi-3.5-vision-instruct is ready
+Enter the app URL: https://internvl-instruct-15c4487-v1.app.beam.cloud
+Model OpenGVLab/InternVL2_5-8B is ready
 Question: What is in this image?
 Image link (press enter to skip): https://upload.wikimedia.org/wikipedia/commons/8/86/Wood.duck.arp.jpg
 Assistant:  The image captures a vibrant wood duck in mid-flight, its wings spread wide as it soars through a lush field dotted with yellow flowers. The duck's head is adorned with striking red and black markings, while its body is a mix of green, white, and brown feathers. The perspective of the photo is from below, placing the duck in the center and giving a sense of its impressive wingspan. The background is a vivid green, filled with various shades of green and yellow flowers, providing a stark contrast to the duck's colorful plumage. The image is a beautiful representation of wildlife in its natural habitat

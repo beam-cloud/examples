@@ -9,16 +9,16 @@ Deploy this by running:
 `beam deploy app.py:transcibe`
 """
 
-from beam import endpoint, Image, Volume, PythonVersion
+from beam import endpoint, Image, Volume
 
 device = "cuda"
 
 image = Image(
-    python_version=PythonVersion.Python38,
+    python_version="python3.10",
     python_packages=[
         "numpy",
         "git+https://github.com/openai/whisper.git",
-        "pytube@git+https://github.com/felipeucelli/pytube@03d72641191ced9d92f31f94f38cfb18c76cfb05",
+        "yt-dlp"
     ],
     commands=["apt-get update && apt-get install -y ffmpeg"],
 )
@@ -48,25 +48,14 @@ def load_models():
 )
 # Inference Function. Context is the value passed down from the loader, video_url is the API input
 def transcribe(context, video_url):
-    from pytube import YouTube
-    import os
+    import uuid
+    import subprocess
+    output_path = f"./videos/{uuid.uuid4()}.mp3"
 
-    # Create YouTube object
-    yt = YouTube(video_url)
-    video = yt.streams.filter(only_audio=True).first()
+    subprocess.run(["yt-dlp", "-x", "--audio-format", "mp3", "-o", output_path, video_url], check=True)
 
-    # Download audio to the `videos` volume
-    out_file = video.download(output_path="./videos")
-
-    base, ext = os.path.splitext(out_file)
-    new_file = base + ".mp3"
-    os.rename(out_file, new_file)
-    a = new_file
-
-    # Retrieve model from loader
     model = context.on_start_value
-    # Inference
-    result = model.transcribe(a)
+    result = model.transcribe(output_path)
 
     print(result["text"])
 

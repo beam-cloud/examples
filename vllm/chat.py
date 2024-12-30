@@ -78,7 +78,7 @@ class ChatApplication:
         self, user_input: str, img_link: Optional[str] = None
     ) -> str:
         """Process user input and return assistant's response."""
-        if self.model == "microsoft/Phi-3.5-vision-instruct" and img_link:
+        if self.model == "OpenGVLab/InternVL2_5-8B" and img_link:
             self.conversation_history.append(
                 {
                     "role": "user",
@@ -145,7 +145,7 @@ def chat() -> None:
 
             # Handle image input for vision models
             img_link = None
-            if model == "microsoft/Phi-3.5-vision-instruct":
+            if model == "OpenGVLab/InternVL2_5-8B":
                 img_link = input("Image link (press enter to skip): ")
 
             response = chat_app.process_user_input(user_input, img_link)
