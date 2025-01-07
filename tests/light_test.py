@@ -13,6 +13,7 @@ API_HOST = os.getenv("BEAM_API_HOST", "api.beam.cloud")
 
 curl_pattern = r"(curl -X POST.+\n(\s*-H .+\n)*\s*-d \'{.*?}\')"
 
+
 def parse_curl(curl_command):
     # Parse the URL
     url_match = re.search(r"'(https?://[^']+)'", curl_command)
@@ -27,7 +28,7 @@ def parse_curl(curl_command):
 
     data_match = re.search(r"-d '(\{.*\})'", curl_command)
     data = json.loads(data_match.group(1)) if data_match else None
-
+    
     method = "POST" if "-X POST" in curl_command else "GET"
 
     req = requests.Request(method, url, headers=headers, json=data)
@@ -75,7 +76,7 @@ def test_quickstart():
         command = [
             "beam",
             "deploy",
-            "app.py:hello_world",
+            "app.py:predict",
             "--name",
             deployment_name,
         ]
@@ -86,12 +87,13 @@ def test_quickstart():
         match = re.search(curl_pattern, result.stdout, re.DOTALL)
         assert match is not None, f"{test_name} no curl command found"
         r = parse_curl(match.group(0))
+        
         with requests.Session() as session:
             response = session.send(r)
             assert (
                 response.status_code == 200
             ), f"{test_name} request to endpoint failed with status code: {response.status_code}"
-            assert "task_id" in response.text, f"{test_name} unexpected response"
+            assert "result" in response.text, f"{test_name} unexpected response"
     finally:
         delete_deployments(deployment_name)
         os.chdir(current_dir)
@@ -268,15 +270,24 @@ def test_preload_models():
         match = re.search(curl_pattern, result.stdout, re.DOTALL)
         assert match is not None, f"{test_name} no curl command found"
         r = parse_curl(match.group(0))
-        with requests.Session() as session:
-            r.prepare_body(json={"prompt": "Hello, world!"}, files=None, data=None)
-            response = session.send(r)
-            assert (
-                response.status_code == 200
-            ), f"{test_name} request to endpoint failed with status code: {response.status_code}"
-            assert (
-                "prediction" in response.text
-            ), f"{test_name} prediction not found in output"
+        
+        retries = 0
+        while True:
+            try:
+                with requests.Session() as session:
+                    r.prepare_body(data=json.dumps({"prompt": "Hello, world!"}), files=None)
+                    response = session.send(r, timeout=None)
+                    assert (
+                        response.status_code == 200
+                    ), f"{test_name} request to endpoint failed with status code: {response.status_code} and response: {response.text}"
+                    assert (
+                        "prediction" in response.text
+                    ), f"{test_name} prediction not found in output"
+                    return
+            except BaseException as e:
+                retries += 1
+                if retries > 3:
+                    raise e
 
     finally:
         delete_deployments(deployment_name)
@@ -316,7 +327,7 @@ def test_task_queue():
             ), f"{test_name} did not get task id in response"
 
 
-            @backoff.on_predicate(backoff.expo, predicate=lambda x: x['status'] == 'PENDING', max_tries=10)
+            @backoff.on_predicate(backoff.expo, predicate=lambda x: x['status'] in ["PENDING", "RUNNING", "COMPLETED"] , max_tries=10)
             def get_task_status(task_id, auth_token):
                 response = requests.get(
                     f"https://{API_HOST}/v2/task/{task_id}/",

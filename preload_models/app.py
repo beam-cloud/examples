@@ -20,7 +20,7 @@ def download_models():
     memory="16Gi",
     gpu="T4",
     image=Image(
-        python_version="python3.8",
+        python_version="python3.10",
         python_packages=[
             "transformers",
             "torch",

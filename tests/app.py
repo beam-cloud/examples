@@ -27,13 +27,13 @@ def _create_beta9_script():
 
 @schedule(
     "0 2,14,19 * * 1-5",
-    secrets=["BEAM_WORKSPACE_ID", "BEAM_AUTH_TOKEN", "BEAM_GATEWAY_HOST", "BEAM_API_HOST", "SLACK_WEBHOOK_URL", "pillow"],
+    secrets=["BEAM_WORKSPACE_ID", "BEAM_AUTH_TOKEN", "BEAM_GATEWAY_HOST", "BEAM_API_HOST", "SLACK_WEBHOOK_URL"],
     image=Image(
-        python_packages=["slack-sdk", "pytest", "requests", "backoff", "numpy"],
+        python_packages=["slack-sdk", "pytest", "requests", "backoff", "numpy", "paramiko"],
         commands=[
             "mkdir ~/.beta9",
         ]
-    )
+    ),
 )
 def run_tests():
     _create_config(os.getenv("BEAM_AUTH_TOKEN"))
@@ -71,6 +71,7 @@ def run_tests():
 
 def ship_results_to_slack(tests, test_index_failed, test_times, total_time):
     slack_url = os.getenv("SLACK_WEBHOOK_URL")
+    print(f"Slack url: {slack_url}")
     total_time_str = seconds_to_readable(total_time)
     
     
