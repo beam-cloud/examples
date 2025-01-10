@@ -28,23 +28,35 @@ def load_models():
     return model, tokenizer
 
 
+image = (
+    Image(python_version="python3.9")
+    .add_python_packages(
+        [
+            "torch",
+            "transformers",
+            "accelerate",
+            "huggingface_hub[hf-transfer]",
+        ]
+    )
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
+)
+
+
 @endpoint(
     secrets=["HF_TOKEN"],
     on_start=load_models,
     name="meta-llama-3-8b-instruct",
     cpu=2,
     memory="32Gi",
-    gpu="A100-40",
-    image=Image(
-        python_version="python3.9",
-        python_packages=["torch", "transformers", "accelerate"],
-    ),
+    gpu_count=2,
+    gpu="A10G",
     volumes=[
         Volume(
             name="cached_models",
             mount_path=CACHE_PATH,
         )
     ],
+    image=image,
 )
 def generate_text(context, **inputs):
     # Retrieve model and tokenizer from on_start
