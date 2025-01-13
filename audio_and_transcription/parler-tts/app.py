@@ -15,9 +15,10 @@ def load_models():
 parlertts_image = (
     Image(
         python_version="python3.10",
-        python_packages=["torch", "transformers", "soundfile", "Pillow", "wheel", "packaging", "ninja"]
+        python_packages=["torch", "transformers", "soundfile", "Pillow", "wheel", "packaging", "ninja",  "huggingface_hub[hf-transfer]"]
     )
     .add_commands(["apt update && apt install git -y", "pip install git+https://github.com/huggingface/parler-tts.git"])
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
 )
 
 @endpoint(

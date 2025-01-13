@@ -11,8 +11,9 @@ VOLUME_PATH = "./gemma-ft"
         python_packages=[
             "huggingface_hub",
             "datasets"
-        ]
-    ),
+            "huggingface_hub[hf-transfer]"
+        ],
+    ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     memory="32Gi",
     cpu=4,
     secrets=["HF_TOKEN"],
@@ -23,10 +24,11 @@ def upload():
         repo_id="google/gemma-2b",
         local_dir=f"{VOLUME_PATH}/weights"
     )
-    
+
     dataset = load_dataset("OpenAssistant/oasst1", split="train")
     dataset.save_to_disk(f"{VOLUME_PATH}/data")
     print("Files uploaded successfully")
+
 
 if __name__ == "__main__":
     upload()

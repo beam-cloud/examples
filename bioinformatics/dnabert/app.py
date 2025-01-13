@@ -9,7 +9,8 @@ if env.is_remote():
 
 CHECKPOINT = "RaphaelMourad/Mistral-DNA-v1-422M-hg38"  # Embedding model
 BEAM_VOLUME_PATH = "./cached_models"  # Model is cached here
-DNA_FILE_PATH = "./seq/AE017046.1.gb"  # https://www.ncbi.nlm.nih.gov/nuccore/AE017046
+# https://www.ncbi.nlm.nih.gov/nuccore/AE017046
+DNA_FILE_PATH = "./seq/AE017046.1.gb"
 CHUNK_SIZE = 3000  # Run in batches of 3000 base pairs each
 
 
@@ -32,13 +33,15 @@ def read_dna_sequence(file_path):
             "torch",
             "biopython",
             "einops",
+            "huggingface_hub[hf-transfer]"
         ],
-    ),
+    ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     volumes=[
         Volume(
             name="cached_models", mount_path=BEAM_VOLUME_PATH
         ),  # Embedding model is cached here
-        Volume(name="seq", mount_path="./seq"),  # Path with the GenBank downloads
+        # Path with the GenBank downloads
+        Volume(name="seq", mount_path="./seq"),
     ],
 )
 # Generate embeddings for each chunk of plasmid sequence
@@ -50,7 +53,8 @@ def generate_embeddings(data):
     model = AutoModel.from_pretrained(
         CHECKPOINT, cache_dir=BEAM_VOLUME_PATH, trust_remote_code=True
     )
-    tokenizer = AutoTokenizer.from_pretrained(CHECKPOINT, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(
+        CHECKPOINT, trust_remote_code=True)
 
     # Inference
     inputs = tokenizer(dna_chunk, return_tensors="pt")["input_ids"]
@@ -71,7 +75,7 @@ def generate_embeddings(data):
 
 # Calculate chunk size for .map()
 def chunk_sequence(sequence, chunk_size):
-    return [sequence[i : i + chunk_size] for i in range(0, len(sequence), chunk_size)]
+    return [sequence[i: i + chunk_size] for i in range(0, len(sequence), chunk_size)]
 
 
 @function(
@@ -86,7 +90,8 @@ def chunk_sequence(sequence, chunk_size):
             "einops",
         ],
     ),
-    volumes=[Volume(name="seq", mount_path="./seq")],  # Path with the GenBank downloads
+    # Path with the GenBank downloads
+    volumes=[Volume(name="seq", mount_path="./seq")],
 )
 # Retrieve GenBank download, spawn containers in chunks of base pairs
 def main():

@@ -18,9 +18,10 @@ mochi_image = (
     Image(
         python_version="python3.11",
         python_packages=["torch", "transformers", "accelerate",
-                         "sentencepiece", "imageio-ffmpeg", "imageio", "ninja"]
+                         "sentencepiece", "imageio-ffmpeg", "imageio", "ninja", "huggingface_hub[hf-transfer]"]
     )
     .add_commands(["apt update && apt install git -y", "pip install git+https://github.com/huggingface/diffusers.git"])
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 )
 
 @endpoint(

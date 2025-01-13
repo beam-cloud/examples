@@ -21,9 +21,9 @@ image = Image(python_version="python3.9").add_python_packages(
         "protobuf",
         "safetensors",
         "xformers",
+        "huggingface_hub[hf-transfer]"
     ],
-)
-
+).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 
 # This runs once when the container first boots
 def load_models():
@@ -34,7 +34,8 @@ def load_models():
     pipe = FluxPipeline.from_pretrained(
         "black-forest-labs/FLUX.1-dev", torch_dtype=torch.bfloat16, cache_dir=CACHE_PATH
     )
-    pipe.enable_model_cpu_offload()  # save some VRAM by offloading the model to CPU. Remove this if you have enough GPU power
+    # save some VRAM by offloading the model to CPU. Remove this if you have enough GPU power
+    pipe.enable_model_cpu_offload()
 
     return pipe
 

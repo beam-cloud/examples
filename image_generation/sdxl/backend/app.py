@@ -23,8 +23,9 @@ image = Image(
         "accelerate",
         "safetensors",
         "xformers",
+        "huggingface_hub[hf-transfer]"
     ],
-)
+).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 
 
 # This runs once when the container first boots

@@ -9,8 +9,9 @@ image = Image(
         "diffusers[torch]",
         "transformers",
         "pillow",
+        "huggingface_hub[hf-transfer]"
     ],
-)
+).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 
 
 def load_models():
@@ -39,7 +40,8 @@ def generate(context, prompt):
 
     pipe = context.on_start_value
 
-    image = pipe(prompt=prompt, num_inference_steps=8, guidance_scale=0.0).images[0]
+    image = pipe(prompt=prompt, num_inference_steps=8,
+                 guidance_scale=0.0).images[0]
 
     # Save image file
     output = Output.from_pil_image(image)

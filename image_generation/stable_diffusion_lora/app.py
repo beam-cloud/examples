@@ -23,8 +23,9 @@ image = Image(
         "accelerate",
         "safetensors",
         "xformers",
+        "huggingface_hub[hf-transfer]"
     ],
-)
+).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 
 CACHE_PATH = "./models"
 MODEL_URL = "https://huggingface.co/martyn/sdxl-turbo-mario-merge-top-rated/blob/main/topRatedTurboxlLCM_v10.safetensors"

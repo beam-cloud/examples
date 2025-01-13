@@ -7,8 +7,10 @@ CACHE_PATH = "./weights"
 def download_models():
     from transformers import AutoTokenizer, OPTForCausalLM
 
-    model = OPTForCausalLM.from_pretrained("facebook/opt-125m", cache_dir=CACHE_PATH)
-    tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", cache_dir=CACHE_PATH)
+    model = OPTForCausalLM.from_pretrained(
+        "facebook/opt-125m", cache_dir=CACHE_PATH)
+    tokenizer = AutoTokenizer.from_pretrained(
+        "facebook/opt-125m", cache_dir=CACHE_PATH)
 
     return model, tokenizer
 
@@ -24,8 +26,9 @@ def download_models():
         python_packages=[
             "transformers",
             "torch",
+            "huggingface_hub[hf-transfer]"
         ],
-    ),
+    ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 )
 def predict(context, prompt):
     # Retrieve cached model from on_start function
