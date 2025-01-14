@@ -12,9 +12,9 @@ BEAM_VOLUME_PATH = "./cached_models"
 
 
 def load_models():
-    model = AudioGen.get_pretrained(f"facebook/audiogen-{MODEL_SIZE}", device="cuda")
+    model = AudioGen.get_pretrained(
+        f"facebook/audiogen-{MODEL_SIZE}", device="cuda")
     return model
-
 
 @endpoint(
     on_start=load_models,
@@ -29,8 +29,9 @@ def load_models():
             "torch",
             "git+https://github.com/facebookresearch/audiocraft.git",
             "torchaudio",
+            "huggingface_hub[hf-transfer]"
         ],
-    ),
+    ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     volumes=[
         Volume(
             name="cached_models",

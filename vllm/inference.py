@@ -9,7 +9,7 @@ vllm_cache = Volume(name="yicoder", mount_path="./yicoder")
 
 
 @function(
-    image=Image().add_python_packages(["vllm"]),
+    image=Image().add_python_packages(["vllm", "huggingface_hub[hf-transfer]"]).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     volumes=[vllm_cache],
     gpu="A100-40",
     memory="8Gi",

@@ -20,8 +20,8 @@ def load_models():
     memory="16Gi",
     on_start=load_models,
     image=Image().add_python_packages(
-        ["outlines", "torch", "transformers", "accelerate"]
-    ),
+        ["outlines", "torch", "transformers", "accelerate", "huggingface_hub[hf-transfer]"]
+    ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
 )
 def predict(context, **inputs):
 

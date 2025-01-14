@@ -18,10 +18,11 @@ image = Image(
     python_packages=[
         "numpy",
         "git+https://github.com/openai/whisper.git",
-        "yt-dlp"
+        "yt-dlp",
+        "huggingface_hub[hf-transfer]"
     ],
     commands=["apt-get update && apt-get install -y ffmpeg"],
-)
+).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 
 
 # This runs when the container first starts and is used to cache the model on disk

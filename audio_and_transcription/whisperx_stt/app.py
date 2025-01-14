@@ -11,8 +11,8 @@ image = (
     Image()
     .add_commands(["apt-get update -y", "apt-get install ffmpeg -y"])
     .add_python_packages(
-        ["faster-whisper==1.0.1", "whisperx==3.1.5", "torchaudio==2.0.2"]
-    )
+        ["faster-whisper==1.0.1", "whisperx==3.1.5", "torchaudio==2.0.2", "huggingface_hub[hf-transfer]"]
+    ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 )
 
 

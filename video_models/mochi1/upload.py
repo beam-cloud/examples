@@ -9,8 +9,9 @@ VOLUME_PATH = "./mochi-1-preview"
     image=Image(
         python_packages=[
             "huggingface_hub",
+            "huggingface_hub[hf-transfer]"
         ]
-    ),
+    ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     memory="32Gi",
     cpu=4,
     secrets=["HF_TOKEN"],
