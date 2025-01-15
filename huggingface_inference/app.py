@@ -29,11 +29,7 @@ def download_models():
     gpu="T4",
     image=Image(
         python_version="python3.9",
-        python_packages=[
-            "transformers",
-            "torch",
-            "huggingface_hub[hf-transfer]"
-        ],
+        python_packages=["transformers", "torch", "huggingface_hub[hf-transfer]"],
     ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     autoscaler=QueueDepthAutoscaler(max_containers=5, tasks_per_container=1),
 )

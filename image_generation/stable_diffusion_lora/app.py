@@ -23,7 +23,7 @@ image = Image(
         "accelerate",
         "safetensors",
         "xformers",
-        "huggingface_hub[hf-transfer]"
+        "huggingface_hub[hf-transfer]",
     ],
 ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 

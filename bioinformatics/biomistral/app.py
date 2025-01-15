@@ -34,7 +34,7 @@ def load_models():
             "sentencepiece==0.1.99",
             "accelerate==0.23.0",
             "torch==2.0.1",
-            "huggingface_hub[hf-transfer]"
+            "huggingface_hub[hf-transfer]",
         ],
     ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     volumes=[

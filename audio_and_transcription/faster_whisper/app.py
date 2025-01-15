@@ -28,7 +28,10 @@ def load_models():
     image=Image(
         base_image="nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04",
         python_version="python3.10",
-        python_packages=["git+https://github.com/SYSTRAN/faster-whisper.git" "huggingface_hub[hf-transfer]"],
+        python_packages=[
+            "git+https://github.com/SYSTRAN/faster-whisper.git"
+            "huggingface_hub[hf-transfer]"
+        ],
     ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     volumes=[
         Volume(
@@ -69,8 +72,7 @@ def transcribe(context, **inputs):
             temp.write(binary_data)
             temp.flush()
 
-            segments, _ = model.transcribe(
-                temp.name, beam_size=5, language=language)
+            segments, _ = model.transcribe(temp.name, beam_size=5, language=language)
 
             for segment in segments:
                 text += segment.text + " "

@@ -33,7 +33,7 @@ def read_dna_sequence(file_path):
             "torch",
             "biopython",
             "einops",
-            "huggingface_hub[hf-transfer]"
+            "huggingface_hub[hf-transfer]",
         ],
     ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     volumes=[
@@ -53,8 +53,7 @@ def generate_embeddings(data):
     model = AutoModel.from_pretrained(
         CHECKPOINT, cache_dir=BEAM_VOLUME_PATH, trust_remote_code=True
     )
-    tokenizer = AutoTokenizer.from_pretrained(
-        CHECKPOINT, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(CHECKPOINT, trust_remote_code=True)
 
     # Inference
     inputs = tokenizer(dna_chunk, return_tensors="pt")["input_ids"]
@@ -75,7 +74,7 @@ def generate_embeddings(data):
 
 # Calculate chunk size for .map()
 def chunk_sequence(sequence, chunk_size):
-    return [sequence[i: i + chunk_size] for i in range(0, len(sequence), chunk_size)]
+    return [sequence[i : i + chunk_size] for i in range(0, len(sequence), chunk_size)]
 
 
 @function(

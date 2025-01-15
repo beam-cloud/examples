@@ -19,7 +19,7 @@ image = Image(
         "numpy",
         "git+https://github.com/openai/whisper.git",
         "yt-dlp",
-        "huggingface_hub[hf-transfer]"
+        "huggingface_hub[hf-transfer]",
     ],
     commands=["apt-get update && apt-get install -y ffmpeg"],
 ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
@@ -51,9 +51,13 @@ def load_models():
 def transcribe(context, video_url):
     import uuid
     import subprocess
+
     output_path = f"./videos/{uuid.uuid4()}.mp3"
 
-    subprocess.run(["yt-dlp", "-x", "--audio-format", "mp3", "-o", output_path, video_url], check=True)
+    subprocess.run(
+        ["yt-dlp", "-x", "--audio-format", "mp3", "-o", output_path, video_url],
+        check=True,
+    )
 
     model = context.on_start_value
     result = model.transcribe(output_path)
