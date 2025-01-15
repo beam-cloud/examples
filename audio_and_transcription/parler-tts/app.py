@@ -16,26 +16,24 @@ def load_models():
 
 
 parlertts_image = (
-    Image(
-        python_version="python3.10",
-        python_packages=[
-            "torch",
-            "transformers",
-            "soundfile",
-            "Pillow",
-            "wheel",
-            "packaging",
-            "ninja",
-            "huggingface_hub[hf-transfer]",
-        ],
-    )
+    Image(python_version="python3.10")
+    .add_python_packages([
+        "torch",
+        "transformers",
+        "soundfile",
+        "Pillow",
+        "wheel",
+        "packaging",
+        "ninja",
+        "huggingface_hub[hf-transfer]",
+    ])
     .add_commands(
         [
             "apt update && apt install git -y",
             "pip install git+https://github.com/huggingface/parler-tts.git",
         ]
     )
-    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 )
 
 
@@ -46,7 +44,7 @@ parlertts_image = (
     memory="32Gi",
     gpu="A10G",
     gpu_count=2,
-    image=parlertts_image,
+    image=parlertts_image
 )
 def generate_speech(context, **inputs):
     model, tokenizer = context.on_start_value
