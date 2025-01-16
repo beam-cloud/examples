@@ -1,18 +1,3 @@
-"""
-In inference.py we will define the inference endpoint for our model. This endpoint
-will load the latest model weights and tokenizer from the volume and then
-use the model to generate a response to the user provided prompt.
-
-Note that the stop sequence is in the output. In a realistic scenario you would
-probably have some service that is tracking the conversation and would remove
-the stop sequence from the output before returning it to the user. It might also
-be storing the conversation history so that the model can continue the conversation.
-This could potentially be a nice use case for Maps (https://docs.beam.cloud/v2/getting-started/sdk#map-2) 
-if you want long conversations without having the front end send the entire 
-conversation history each time. Be careful, Maps are not long-term
-persistent and the data will eventually be lost.
-"""
-
 from beam import Image, endpoint, env, Volume, QueueDepthAutoscaler, experimental
 
 MOUNT_PATH = "./gemma-ft"
@@ -92,7 +77,3 @@ def predict(**inputs):
     print(text)
 
     return {"text": text}
-
-
-if __name__ == "__main__":
-    predict.remote()
