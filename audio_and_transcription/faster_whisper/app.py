@@ -31,7 +31,7 @@ def load_models():
     )
     .add_python_packages(
         [
-            "git+https://github.com/SYSTRAN/faster-whisper.git"
+            "git+https://github.com/SYSTRAN/faster-whisper.git",
             "huggingface_hub[hf-transfer]"
         ]
     )
