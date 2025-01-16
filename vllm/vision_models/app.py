@@ -2,14 +2,17 @@ from beam import endpoint, Image
 
 MODEL_NAME = "OpenGVLab/InternVL2_5-8B"
 
-vllm_image = Image(
-    python_version="python3.10",
-    python_packages=[
-        "vllm==0.6.3.post1",
-        "fastapi[standard]==0.115.4",
-        "huggingface_hub[hf-transfer]",
-    ],
-).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
+vllm_image = (
+    Image(python_version="python3.10")
+    .add_python_packages(
+        [
+            "vllm==0.6.3.post1",
+            "fastapi[standard]==0.115.4",
+            "huggingface_hub[hf-transfer]",
+        ]
+    )
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
+)
 
 
 @endpoint(

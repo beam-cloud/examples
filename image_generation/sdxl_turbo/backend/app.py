@@ -3,15 +3,18 @@ from beam import Image, Volume, endpoint, Output
 CACHE_PATH = "./models"
 BASE_MODEL = "stabilityai/sdxl-turbo"
 
-image = Image(
-    python_version="python3.10",
-    python_packages=[
-        "diffusers[torch]",
-        "transformers",
-        "pillow",
-        "huggingface_hub[hf-transfer]",
-    ],
-).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
+image = (
+    Image(python_version="python3.10")
+    .add_python_packages(
+        [
+            "diffusers[torch]",
+            "transformers",
+            "pillow",
+            "huggingface_hub[hf-transfer]",
+        ]
+    )
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
+)
 
 
 # This runs once when the container first starts

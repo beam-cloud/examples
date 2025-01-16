@@ -11,21 +11,24 @@ if env.is_remote():
 
 
 # The container image for the remote runtime
-image = Image(
-    python_version="python3.9",
-    python_packages=[
-        "diffusers[torch]>=0.10",
-        "transformers",
-        "huggingface_hub",
-        "torch",
-        "peft",
-        "pillow",
-        "accelerate",
-        "safetensors",
-        "xformers",
-        "huggingface_hub[hf-transfer]",
-    ],
-).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
+image = (
+    Image(python_version="python3.9")
+    .add_python_packages(
+        [
+            "diffusers[torch]>=0.10",
+            "transformers",
+            "huggingface_hub",
+            "torch",
+            "peft",
+            "pillow",
+            "accelerate",
+            "safetensors",
+            "xformers",
+            "huggingface_hub[hf-transfer]",
+        ]
+    )
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
+)
 
 CACHE_PATH = "./models"
 MODEL_URL = "https://huggingface.co/martyn/sdxl-turbo-mario-merge-top-rated/blob/main/topRatedTurboxlLCM_v10.safetensors"

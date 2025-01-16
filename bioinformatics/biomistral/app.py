@@ -27,16 +27,17 @@ def load_models():
     cpu=2,
     memory="32Gi",
     gpu="A10G",
-    image=Image(
-        python_version="python3.11",
-        python_packages=[
+    image=Image(python_version="python3.11")
+    .add_python_packages(
+        [
             "transformers==4.42.3",
             "sentencepiece==0.1.99",
             "accelerate==0.23.0",
             "torch==2.0.1",
             "huggingface_hub[hf-transfer]",
-        ],
-    ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
+        ]
+    )
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     volumes=[
         Volume(
             name="cached_models",

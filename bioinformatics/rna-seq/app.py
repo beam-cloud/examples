@@ -1,6 +1,6 @@
 from beam import function, Image, Volume, env
 
-image = Image(python_packages=["biopython"])
+image = Image().add_python_packages(["biopython"])
 volume_path = "./seq"
 
 if env.is_remote():

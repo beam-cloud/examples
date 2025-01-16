@@ -20,14 +20,13 @@ if env.is_remote():
 
 
 # The beam container image that this code will run on
-image = Image(
-    python_version="python3.9",
-    python_packages=[
+image = Image(python_version="python3.9").add_python_packages(
+    [
         "torch",
         "torchvision",
         "pillow",
         "matplotlib",
-    ],
+    ]
 )
 
 

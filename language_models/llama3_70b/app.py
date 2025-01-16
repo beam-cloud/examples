@@ -55,11 +55,9 @@ def download_models():
     cpu="8000m",
     memory="32Gi",
     gpu="A100-40",
-    image=Image(
-        python_version="python3.10",
-        python_packages=["vllm==0.5.4", "huggingface_hub[hf-transfer]"],
-        commands=[],
-    ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
+    image=Image(python_version="python3.10")
+    .add_python_packages(["vllm==0.5.4", "huggingface_hub[hf-transfer]"])
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     timeout=3600,
 )
 def generate(context, **inputs):

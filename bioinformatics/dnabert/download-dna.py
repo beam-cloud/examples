@@ -12,7 +12,7 @@ BEAM_VOLUME_PATH = "./seq"  # Distributed cloud storage volume mounted to this p
     volumes=[
         Volume(name="seq", mount_path=BEAM_VOLUME_PATH)
     ],  # Distributed cloud storage volume
-    image=Image(python_packages=["biopython"]),
+    image=Image().add_python_packages(["biopython"]),
 )
 # Download DNA dataset from GenBank
 def download(accession_number):

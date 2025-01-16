@@ -8,9 +8,11 @@ VOLUME_PATH = "./gemma-ft"
 
 
 @function(
-    image=Image(
-        python_packages=["huggingface_hub", "datasets", "huggingface_hub[hf-transfer]"],
-    ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
+    image=Image()
+    .add_python_packages(
+        ["huggingface_hub", "datasets", "huggingface_hub[hf-transfer]"]
+    )
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     memory="32Gi",
     cpu=4,
     secrets=["HF_TOKEN"],

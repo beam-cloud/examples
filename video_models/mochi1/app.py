@@ -17,9 +17,9 @@ def load_models():
 
 
 mochi_image = (
-    Image(
-        python_version="python3.11",
-        python_packages=[
+    Image(python_version="python3.11")
+    .add_python_packages(
+        [
             "torch",
             "transformers",
             "accelerate",
@@ -28,7 +28,7 @@ mochi_image = (
             "imageio",
             "ninja",
             "huggingface_hub[hf-transfer]",
-        ],
+        ]
     )
     .add_commands(
         [

@@ -27,10 +27,9 @@ def download_models():
     cpu=1,
     memory="16Gi",
     gpu="T4",
-    image=Image(
-        python_version="python3.9",
-        python_packages=["transformers", "torch", "huggingface_hub[hf-transfer]"],
-    ).with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
+    image=Image(python_version="python3.9")
+    .add_python_packages(["transformers", "torch", "huggingface_hub[hf-transfer]"])
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     autoscaler=QueueDepthAutoscaler(max_containers=5, tasks_per_container=1),
 )
 def predict(context, **inputs):
