@@ -60,9 +60,8 @@ s = experimental.Signal(
     cpu=1,
     memory="16Gi",
     gpu="T4",
-    image=Image(
-        python_version="python3.9",
-        python_packages=["transformers==4.42.0", "torch", "peft"],
+    image=Image(python_version="python3.9").add_python_packages(
+        ["transformers==4.42.0", "torch", "peft"]
     ),
     # This autoscaler spawns new containers (up to 5) if the queue depth for tasks exceeds 1
     autoscaler=QueueDepthAutoscaler(max_containers=5, tasks_per_container=1),

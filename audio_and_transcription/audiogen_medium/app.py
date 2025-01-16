@@ -22,15 +22,17 @@ def load_models():
     cpu=2,
     memory="20Gi",
     gpu="A10G",
-    image=Image(
-        commands=["apt-get update -y && apt-get install ffmpeg -y"],
-        python_version="python3.9",
-        python_packages=[
+    image=Image(python_version="python3.9")
+    .add_commands(["apt-get update -y && apt-get install ffmpeg -y"])
+    .add_python_packages(
+        [
             "torch",
             "git+https://github.com/facebookresearch/audiocraft.git",
             "torchaudio",
-        ],
-    ),
+            "huggingface_hub[hf-transfer]",
+        ]
+    )
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     volumes=[
         Volume(
             name="cached_models",

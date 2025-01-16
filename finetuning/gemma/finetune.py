@@ -1,7 +1,7 @@
 from beam import Volume, Image, function
 
 
-# The mount path is the location on the beam volume that we will access. 
+# The mount path is the location on the beam volume that we will access.
 MOUNT_PATH = "./gemma-ft"
 WEIGHT_PATH = "./gemma-ft/weights"
 OPEN_ASSISTANT_DATASET_PATH = "./gemma-ft/data/oa.jsonl"
@@ -9,8 +9,8 @@ OPEN_ASSISTANT_DATASET_PATH = "./gemma-ft/data/oa.jsonl"
 
 @function(
     volumes=[Volume(name="gemma-ft", mount_path=MOUNT_PATH)],
-    image=Image(
-        python_packages=["transformers", "torch", "datasets", "peft", "bitsandbytes"]
+    image=Image().add_python_packages(
+        ["transformers", "torch", "datasets", "peft", "bitsandbytes"]
     ),
     gpu="A100-40",
     cpu=4,

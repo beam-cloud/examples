@@ -11,7 +11,9 @@ internvl = VLLM(
     memory="32Gi",
     gpu="A10G",
     gpu_count=2,
-    image=(Image(python_version="python3.12", python_packages=["vllm==0.6.4.post1"])),
+    image=(Image(python_version="python3.12")).add_python_packages(
+        ["vllm==0.6.4.post1"]
+    ),
     vllm_args=VLLMArgs(
         model=INTERNVL2_5,
         served_model_name=[INTERNVL2_5],

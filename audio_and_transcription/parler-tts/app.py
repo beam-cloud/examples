@@ -6,19 +6,36 @@ if env.is_remote():
     import soundfile as sf
     import uuid
 
+
 def load_models():
     model = ParlerTTSForConditionalGeneration.from_pretrained(
-        "parler-tts/parler-tts-mini-v1").to("cuda:0")
+        "parler-tts/parler-tts-mini-v1"
+    ).to("cuda:0")
     tokenizer = AutoTokenizer.from_pretrained("parler-tts/parler-tts-mini-v1")
     return model, tokenizer
 
+
 parlertts_image = (
-    Image(
-        python_version="python3.10",
-        python_packages=["torch", "transformers", "soundfile", "Pillow", "wheel", "packaging", "ninja"]
+    Image(python_version="python3.10")
+    .add_python_packages([
+        "torch",
+        "transformers",
+        "soundfile",
+        "Pillow",
+        "wheel",
+        "packaging",
+        "ninja",
+        "huggingface_hub[hf-transfer]",
+    ])
+    .add_commands(
+        [
+            "apt update && apt install git -y",
+            "pip install git+https://github.com/huggingface/parler-tts.git",
+        ]
     )
-    .add_commands(["apt update && apt install git -y", "pip install git+https://github.com/huggingface/parler-tts.git"])
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 )
+
 
 @endpoint(
     name="parler-tts",
@@ -37,22 +54,19 @@ def generate_speech(context, **inputs):
 
     if not prompt or not description:
         return {"error": "Please provide a prompt and description"}
-    
+
     device = "cuda:0"
 
-    input_ids = tokenizer(
-        description, return_tensors="pt").input_ids.to(device)
-    prompt_input_ids = tokenizer(
-        prompt, return_tensors="pt").input_ids.to(device)
+    input_ids = tokenizer(description, return_tensors="pt").input_ids.to(device)
+    prompt_input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
 
-    generation = model.generate(
-        input_ids=input_ids, prompt_input_ids=prompt_input_ids)
+    generation = model.generate(input_ids=input_ids, prompt_input_ids=prompt_input_ids)
     audio_arr = generation.cpu().numpy().squeeze()
 
     file_name = f"/tmp/parler_tts_out_{uuid.uuid4()}.wav"
 
     sf.write(file_name, audio_arr, model.config.sampling_rate)
-   
+
     output_file = Output(path=file_name)
     output_file.save()
     public_url = output_file.public_url(expires=1200000000)

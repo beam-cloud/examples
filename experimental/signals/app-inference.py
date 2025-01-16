@@ -23,7 +23,7 @@ s = experimental.Signal(
 @endpoint(
     name="inference",
     volumes=[Volume(name=VOLUME_NAME, mount_path=CACHE_PATH)],
-    image=Image(python_packages=["transformers", "torch"]),
+    image=Image().add_python_packages(["transformers", "torch"]),
     on_start=load_latest_model,
 )
 def predict(**inputs):

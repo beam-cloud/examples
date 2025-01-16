@@ -31,7 +31,6 @@ def load_finetuned_model():
     stop_token_ids = tokenizer.encode(stop_token, add_special_tokens=False)
 
 
-
 @endpoint(
     name="llama-inference",
     on_start=load_finetuned_model,
@@ -40,14 +39,12 @@ def load_finetuned_model():
     memory="16Gi",
     # We can switch to a smaller, more cost-effective GPU for inference rather than fine-tuning
     gpu="T4",
-    image=Image(
-        python_version="python3.9",
-        python_packages=["transformers==4.42.0", "torch", "peft"],
+    image=Image(python_version="python3.9").add_python_packages(
+        ["transformers==4.42.0", "torch", "peft"]
     ),
     # This autoscaler spawns new containers (up to 5) if the queue depth for tasks exceeds 1
     autoscaler=QueueDepthAutoscaler(max_containers=5, tasks_per_container=1),
 )
-
 def predict(**inputs):
     global model, tokenizer, stop_token_ids  # These will have the latest values
 
@@ -74,6 +71,7 @@ def predict(**inputs):
     print(text)
 
     return {"text": text}
+
 
 if __name__ == "__main__":
     predict.remote()

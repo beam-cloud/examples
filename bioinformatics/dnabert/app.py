@@ -9,7 +9,8 @@ if env.is_remote():
 
 CHECKPOINT = "RaphaelMourad/Mistral-DNA-v1-422M-hg38"  # Embedding model
 BEAM_VOLUME_PATH = "./cached_models"  # Model is cached here
-DNA_FILE_PATH = "./seq/AE017046.1.gb"  # https://www.ncbi.nlm.nih.gov/nuccore/AE017046
+# https://www.ncbi.nlm.nih.gov/nuccore/AE017046
+DNA_FILE_PATH = "./seq/AE017046.1.gb"
 CHUNK_SIZE = 3000  # Run in batches of 3000 base pairs each
 
 
@@ -23,22 +24,25 @@ def read_dna_sequence(file_path):
     name="dnabert",
     cpu=4,
     memory="32Gi",
-    image=Image(
-        python_version="python3.11",
-        python_packages=[
+    image=Image(python_version="python3.11")
+    .add_python_packages(
+        [
             "transformers",
             "sentencepiece==0.1.99",
             "accelerate==0.23.0",
             "torch",
             "biopython",
             "einops",
-        ],
-    ),
+            "huggingface_hub[hf-transfer]",
+        ]
+    )
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     volumes=[
         Volume(
             name="cached_models", mount_path=BEAM_VOLUME_PATH
         ),  # Embedding model is cached here
-        Volume(name="seq", mount_path="./seq"),  # Path with the GenBank downloads
+        # Path with the GenBank downloads
+        Volume(name="seq", mount_path="./seq"),
     ],
 )
 # Generate embeddings for each chunk of plasmid sequence
@@ -75,18 +79,18 @@ def chunk_sequence(sequence, chunk_size):
 
 
 @function(
-    image=Image(
-        python_version="python3.11",
-        python_packages=[
+    image=Image(python_version="python3.11").add_python_packages(
+        [
             "transformers",
             "sentencepiece==0.1.99",
             "accelerate==0.23.0",
             "torch",
             "biopython",
             "einops",
-        ],
+        ]
     ),
-    volumes=[Volume(name="seq", mount_path="./seq")],  # Path with the GenBank downloads
+    # Path with the GenBank downloads
+    volumes=[Volume(name="seq", mount_path="./seq")],
 )
 # Retrieve GenBank download, spawn containers in chunks of base pairs
 def main():

@@ -19,13 +19,9 @@ def download_models():
     cpu=1,
     memory="16Gi",
     gpu="T4",
-    image=Image(
-        python_version="python3.10",
-        python_packages=[
-            "transformers",
-            "torch",
-        ],
-    ),
+    image=Image(python_version="python3.10")
+    .add_python_packages(["transformers", "torch", "huggingface_hub[hf-transfer]"])
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
 )
 def predict(context, prompt):
     # Retrieve cached model from on_start function

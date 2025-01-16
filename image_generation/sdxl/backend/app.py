@@ -12,18 +12,22 @@ REPO = "ByteDance/SDXL-Lightning"
 CKPT = "sdxl_lightning_4step_unet.safetensors"
 
 
-image = Image(
-    python_version="python3.9",
-    python_packages=[
-        "diffusers[torch]>=0.10",
-        "transformers",
-        "huggingface_hub",
-        "torch",
-        "pillow",
-        "accelerate",
-        "safetensors",
-        "xformers",
-    ],
+image = (
+    Image(python_version="python3.9")
+    .add_python_packages(
+        [
+            "diffusers[torch]>=0.10",
+            "transformers",
+            "huggingface_hub",
+            "torch",
+            "pillow",
+            "accelerate",
+            "safetensors",
+            "xformers",
+            "huggingface_hub[hf-transfer]",
+        ]
+    )
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 )
 
 

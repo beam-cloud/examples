@@ -1,13 +1,6 @@
-from beam import Image as BeamImage, Output, function
+from beam import Image, Output, function
 
-
-@function(
-    image=BeamImage(
-        python_packages=[
-            "pillow",
-        ],
-    ),
-)
+@function(image=Image().add_python_packages(["pillow"]))
 def save_image():
     from PIL import Image as PILImage
 

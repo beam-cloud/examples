@@ -2,7 +2,18 @@ from beam import endpoint, Image
 
 MODEL_NAME = "OpenGVLab/InternVL2_5-8B"
 
-vllm_image = Image(python_version="python3.10", python_packages=["vllm==0.6.3.post1", "fastapi[standard]==0.115.4"])
+vllm_image = (
+    Image(python_version="python3.10")
+    .add_python_packages(
+        [
+            "vllm==0.6.3.post1",
+            "fastapi[standard]==0.115.4",
+            "huggingface_hub[hf-transfer]",
+        ]
+    )
+    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
+)
+
 
 @endpoint(
     name="internvl2_5-1b",
@@ -42,7 +53,7 @@ def generate():
         gpu_memory_utilization=0.90,
         max_model_len=8096,
         trust_remote_code=True,
-        enforce_eager=False,  
+        enforce_eager=False,
     )
 
     engine = AsyncLLMEngine.from_engine_args(
@@ -77,7 +88,8 @@ def generate():
     )
 
     return web_app
- 
+
+
 def get_model_config(engine):
     import asyncio
 
@@ -94,4 +106,4 @@ def get_model_config(engine):
         # When using single vLLM without engine_use_ray
         model_config = asyncio.run(engine.get_model_config())
 
-    return model_config    
+    return model_config
