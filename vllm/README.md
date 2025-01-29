@@ -19,9 +19,10 @@ The models can be deployed like this:
 beam deploy models.py:internvl
 beam deploy models.py:yicoder_chat
 beam deploy models.py:mistral_instruct
+beam deploy models.py:deepseek_r1
 ```
 
-Each of these models supports different features. The `internvl` model supports multi-modal inference, the `yicoder_chat` model supports chat inference, and the `mistral_instruct` model supports chat inference with tool calling. 
+Each of these models supports different features. The `internvl` model supports multi-modal inference, the `yicoder_chat` model supports chat inference, and the `mistral_instruct` model supports chat inference with tool calling. The `deepseek_r1` is reasoning models supports generate inference.
 
 To demonstrate how to use these APIs, we have provided a simple chat client in `chat.py`. This script will allow you to chat with each of the deployed models. 
 
