@@ -4,6 +4,7 @@ from beam import Image
 INTERNVL2_5 = "OpenGVLab/InternVL2_5-8B"
 YI_CODER_CHAT = "01-ai/Yi-Coder-9B-Chat"
 MISTRAL_INSTRUCT = "mistralai/Mistral-7B-Instruct-v0.3"
+DEEPSEEK_R1 = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
 
 internvl = VLLM(
     name=INTERNVL2_5.split("/")[-1],
@@ -50,5 +51,19 @@ mistral_instruct = VLLM(
         chat_template="./tool_chat_template_mistral.jinja",
         enable_auto_tool_choice=True,
         tool_call_parser="mistral",
+    ),
+)
+
+deepseek_r1 = VLLM(
+    name=DEEPSEEK_R1.split("/")[-1],
+    cpu=8,
+    memory="32Gi",
+    gpu="A100-40",
+    vllm_args=VLLMArgs(
+        model=DEEPSEEK_R1,
+        served_model_name=[DEEPSEEK_R1],
+        task="generate",
+        trust_remote_code=True,
+        max_model_len=8096
     ),
 )

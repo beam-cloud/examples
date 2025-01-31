@@ -75,7 +75,7 @@ class ChatApplication:
         return self.model == "mistralai/Mistral-7B-Instruct-v0.3"
 
     def process_user_input(
-        self, user_input: str, img_link: Optional[str] = None
+        self, user_input: str, img_link: Optional[str] = None, stream: bool = False
     ) -> str:
         """Process user input and return assistant's response."""
         if self.model == "OpenGVLab/InternVL2_5-8B" and img_link:
@@ -95,22 +95,33 @@ class ChatApplication:
             model=self.model,
             messages=self.conversation_history,
             tools=tools if self.supports_tools() else None,
+            stream=stream,
         )
 
-        assistant_message = response.choices[0].message
-        final_response = ""
-
-        # Handle tool calls if present and supported
-        if self.supports_tools() and assistant_message.tool_calls:
-            final_response = self.handle_tool_calls(assistant_message)
+        if stream:
+            print("Assistant: ", end="", flush=True)
+            full_response = ""
+            for chunk in response:
+                if chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    print(content, end="", flush=True)
+                    full_response += content
+            print()
+            self.conversation_history.append(
+                {"role": "assistant", "content": full_response}
+            )
+            return full_response
         else:
-            final_response = assistant_message.content
-
-        self.conversation_history.append(
-            {"role": "assistant", "content": final_response}
-        )
-
-        return final_response
+            assistant_message = response.choices[0].message
+            final_response = ""
+            if self.supports_tools() and assistant_message.tool_calls:
+                final_response = self.handle_tool_calls(assistant_message)
+            else:
+                final_response = assistant_message.content
+            self.conversation_history.append(
+                {"role": "assistant", "content": final_response}
+            )
+            return final_response
 
 
 def chat() -> None:
@@ -124,6 +135,8 @@ def chat() -> None:
     if len(beam_config) < 2:
         raise EnvironmentError("Beam config does not contain a token.")
     beam_token = beam_config[1].split(" = ")[1].strip()
+
+    stream = input("Stream mode? (y/n): ").lower() == "y"
 
     client = OpenAI(
         api_key=beam_token,
@@ -148,8 +161,9 @@ def chat() -> None:
             if model == "OpenGVLab/InternVL2_5-8B":
                 img_link = input("Image link (press enter to skip): ")
 
-            response = chat_app.process_user_input(user_input, img_link)
-            print("Assistant:", response)
+            response = chat_app.process_user_input(user_input, img_link, stream)
+            if not stream:
+                print(f"Assistant: {response}")
 
     except KeyboardInterrupt:
         print("\nExiting the chat.")
