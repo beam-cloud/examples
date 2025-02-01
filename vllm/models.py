@@ -58,12 +58,13 @@ deepseek_r1 = VLLM(
     name=DEEPSEEK_R1.split("/")[-1],
     cpu=8,
     memory="32Gi",
-    gpu="A100-40",
+    gpu="A10G",
+    gpu_count=2,
     vllm_args=VLLMArgs(
         model=DEEPSEEK_R1,
         served_model_name=[DEEPSEEK_R1],
         task="generate",
         trust_remote_code=True,
-        max_model_len=8096
+        max_model_len=8096,
     ),
 )
