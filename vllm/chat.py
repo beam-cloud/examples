@@ -107,13 +107,13 @@ class ChatApplication:
         )
 
         if stream:
-            print("Assistant: ", end="", flush=True)  # Remove this line if needed
+            print("Assistant: ", end="", flush=True)
             full_response = ""
             for chunk in response:
                 if chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
                     full_response += content
-            print()  # Keep this to ensure clean formatting
+            print()
             self.conversation_history.append(
                 {"role": "assistant", "content": full_response}
             )
@@ -190,7 +190,6 @@ def chat() -> None:
             # Start timer
             start_time = time.time()
 
-            # Streaming Mode Fix
             if stream:
                 full_response = ""
                 try:
