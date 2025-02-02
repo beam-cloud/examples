@@ -5,22 +5,31 @@ if env.is_remote():
     import whisperx
     import gc
 
-
 # Define the custom image
 image = (
-    Image()
+    Image(
+        base_image="nvidia/cuda:12.1.0-runtime-ubuntu22.04", python_version="python3.11"
+    )
     .add_commands(["apt-get update -y", "apt-get install ffmpeg -y"])
     .add_python_packages(
         [
-            "faster-whisper==1.0.1",
-            "whisperx==3.1.5",
-            "torchaudio==2.0.2",
+            "torch",
+            "grpcio==1.68.1",
+            "whisperx",
+            "torchaudio",
             "huggingface_hub[hf-transfer]",
+        ]
+    )
+    .add_commands(
+        [
+            "apt-get update -y",
+            "apt-get install libcudnn8=8.9.2.26-1+cuda12.1",
+            "apt-get install libcudnn8-dev=8.9.2.26-1+cuda12.1",
+            'python -c "import torch; torch.backends.cuda.matmul.allow_tf32 = True; torch.backends.cudnn.allow_tf32 = True"',
         ]
     )
     .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
 )
-
 
 volume_path = "./cached_models"
 device = "cuda"
