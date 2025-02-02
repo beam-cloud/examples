@@ -19,9 +19,9 @@ headers = {
     "Authorization": f"Bearer {BEAM_AUTH_TOKEN}",
     "Content-Type": "application/json",
 }
+
 data = {
-    # Any arbitrary Youtube URL, we use a short 10s video for the sake of this example
-    "video_url": "https://www.youtube.com/watch?v=YVlCtJ52Juc&ab_channel=minutephysics"
+    "audio_url": "https://audio-samples.github.io/samples/mp3/blizzard_unconditional/sample-4.mp3"
 }
 
 times = []

@@ -26,13 +26,14 @@ def load_models():
     memory="32Gi",
     gpu="A10G",
     image=Image(
-        base_image="nvidia/cuda:12.2.2-cudnn8-runtime-ubuntu22.04",
+        base_image="nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04",
         python_version="python3.10",
     )
     .add_python_packages(
         [
             "git+https://github.com/SYSTRAN/faster-whisper.git",
-            "huggingface_hub[hf-transfer]"
+            "huggingface_hub[hf-transfer]",
+            "ctranslate2==4.4.0",
         ]
     )
     .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),

@@ -1,8 +1,8 @@
 """
 *** Whisper Example *** 
 
-This app deploys a serverless GPU function which takes a Youtube URL as input ("video_url") 
-and transcribes the video provided using Whisper.
+This app deploys a serverless GPU function which takes a audio URL as input ("audio_url") 
+and transcribes the audio provided using Whisper.
 
 Deploy this by running:
 
@@ -20,7 +20,6 @@ image = (
         [
             "numpy",
             "git+https://github.com/openai/whisper.git",
-            "yt-dlp",
             "huggingface_hub[hf-transfer]",
         ]
     )
@@ -47,23 +46,16 @@ def load_models():
         Volume(
             mount_path="./cache", name="cache"
         ),  # The downloaded model is stored here
-        Volume(mount_path="./videos", name="videos"),  # Video audio is stored here
+        Volume(mount_path="./audios", name="audios"),  # Audio is stored here
     ],
 )
-# Inference Function. Context is the value passed down from the loader, video_url is the API input
-def transcribe(context, video_url):
-    import uuid
-    import subprocess
-
-    output_path = f"./videos/{uuid.uuid4()}.mp3"
-
-    subprocess.run(
-        ["yt-dlp", "-x", "--audio-format", "mp3", "-o", output_path, video_url],
-        check=True,
-    )
-
+# Inference Function. Context is the value passed down from the loader, audio_url is the API input
+def transcribe(context, **inputs):
     model = context.on_start_value
-    result = model.transcribe(output_path)
+
+    url = inputs.get("audio_url")
+
+    result = model.transcribe(url)
 
     print(result["text"])
 
