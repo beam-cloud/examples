@@ -19,7 +19,7 @@ image = (
     )
 )
 
-streamlit_server = Pod(
+sglang_server = Pod(
     image=image,
     ports=[8080],
     cpu=12,
@@ -39,6 +39,6 @@ streamlit_server = Pod(
     ],
 )
 
-res = streamlit_server.create()
+res = sglang_server.create()
 
-print("✨ Streamlit server hosted at:", res.url)
+print("✨ SGlang server hosted at:", res.url)
