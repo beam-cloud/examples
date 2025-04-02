@@ -1,0 +1,12 @@
+[project]
+name = "mcp-beam"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp>=3.11.14",
+    "beam-client>=0.2.151",
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.6.0",
+]
