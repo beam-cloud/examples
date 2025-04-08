@@ -205,6 +205,7 @@ def test_creating_endpoint():
         assert match is not None, f"{test_name} no curl command found"
         r = parse_curl(match.group(0))
         with requests.Session() as session:
+            r.prepare_body(json={"x": 2}, files=None, data=None)
             response = session.send(r)
             assert (
                 response.status_code == 200
