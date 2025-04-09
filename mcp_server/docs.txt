@@ -1,2 +1,157 @@
 Image and Video Serverless ComfyUI This guide shows how to deploy a ComfyUI server on Beam using Pod. We’ll set up a server to generate images with Flux1 Schnell, but you can easily adapt it to use other models like Stable Diffusion v1.5. View the Code See the code for this example on Github. ​ Setting Up the ComfyUI Server Create the Deployment Script Create a file named app.py with the following code. This script sets up a Beam Pod with ComfyUI, installs dependencies, downloads the Flux1 Schnell model, and launches the server. Copy from beam import Image, Pod ORG_NAME = "Comfy-Org" REPO_NAME = "flux1-schnell" WEIGHTS_FILE = "flux1-schnell-fp8.safetensors" COMMIT = "f2808ab17fe9ff81dcf89ed0301cf644c281be0a" image = ( Image() .add_commands(["apt update && apt install git -y"]) .add_python_packages( [ "fastapi[standard]==0.115.4", "comfy-cli==1.3.5", "huggingface_hub[hf_transfer]==0.26.2", ] ) .add_commands( [ "comfy --skip-prompt install --nvidia --version 0.3.10", "comfy node install was-node-suite-comfyui@1.0.2", "mkdir -p /root/comfy/ComfyUI/models/checkpoints/", f"huggingface-cli download {ORG_NAME}/{REPO_NAME} {WEIGHTS_FILE} --cache-dir /comfy-cache", f"ln -s /comfy-cache/models--{ORG_NAME}--{REPO_NAME}/snapshots/{COMMIT}/{WEIGHTS_FILE} /root/comfy/ComfyUI/models/checkpoints/{WEIGHTS_FILE}", ] ) ) comfyui_server = Pod( image=image, ports=[8000], cpu=12, memory="32Gi", gpu="A100-40", entrypoint=["sh", "-c", "comfy launch -- --listen 0.0.0.0 --port 8000"], ) res = comfyui_server.create() print("✨ ComfyUI hosted at:", res.url) Start ComfyUI Copy python app.py This deploys the ComfyUI server to Beam. After deployment, you’ll see a URL (e.g., https://pod-12345.apps.beam.cloud) where your server is hosted. ComfyUI takes a minute or two to start after deploying it for the first time. Accessing the Server Open the URL from your terminal in a browser to access the ComfyUI interface. Use the web UI to load workflows or generate images. ​ Using Different Models You can swap the Flux1 Schnell model for another, such as Stable Diffusion v1.5, by updating the model variables in app.py. Here’s how: Update the Model Variables Define the organization, repository, weights file, and commit ID for your desired model. For example, to use Stable Diffusion v1.5: Copy ORG_NAME = "Comfy-Org" REPO_NAME = "stable-diffusion-v1-5-archive" WEIGHTS_FILE = "v1-5-pruned-emaonly-fp16.safetensors" COMMIT = "21e044065c0b2d82dafd35397a553847c70c0445" Apply to the Image Commands The rest of the script uses these variables, so no further changes are needed to the image section: Copy image = ( Image() .add_commands(["apt update && apt install git -y"]) .add_python_packages( [ "fastapi[standard]==0.115.4", "comfy-cli==1.3.5", "huggingface_hub[hf_transfer]==0.26.2", ] ) .add_commands( [ "comfy --skip-prompt install --nvidia --version 0.3.10", "comfy node install was-node-suite-comfyui@1.0.2", "mkdir -p /root/comfy/ComfyUI/models/checkpoints/", f"huggingface-cli download {ORG_NAME}/{REPO_NAME} {WEIGHTS_FILE} --cache-dir /comfy-cache", f"ln -s /comfy-cache/models--{ORG_NAME}--{REPO_NAME}/snapshots/{COMMIT}/{WEIGHTS_FILE} /root/comfy/ComfyUI/models/checkpoints/{WEIGHTS_FILE}", ] ) ) Find Model Details To use any other model: Visit Comfy-Org Hugging Face and find your desired model. Update ORG_NAME, REPO_NAME, WEIGHTS_FILE, and COMMIT with values from the model’s repository. Check the “Files and versions” tab for the weights file and commit hash. ​ Running Workflows as APIs You can also expose ComfyUI workflows as APIs using Beam’s ASGI support. This allows you to programmatically generate images by sending requests with prompts. Below is an example of how to set this up: Create the API Script Copy from beam import Image, asgi, Output image = ( Image() .add_commands(["apt update && apt install git -y"]) .add_python_packages( [ "fastapi[standard]==0.115.4", "comfy-cli", "huggingface_hub[hf_transfer]==0.26.2", ] ) .add_commands( [ "yes | comfy install --nvidia --version 0.3.10", "comfy node install was-node-suite-comfyui@1.0.2", "mkdir -p /root/comfy/ComfyUI/models/checkpoints/", "huggingface-cli download Comfy-Org/flux1-schnell flux1-schnell-fp8.safetensors --cache-dir /comfy-cache", "ln -s /comfy-cache/models--Comfy-Org--flux1-schnell/snapshots/f2808ab17fe9ff81dcf89ed0301cf644c281be0a/flux1-schnell-fp8.safetensors /root/comfy/ComfyUI/models/checkpoints/flux1-schnell-fp8.safetensors", ] ) ) def init_models(): import subprocess cmd = "comfy launch --background" subprocess.run(cmd, shell=True, check=True) @asgi( name="comfy", image=image, on_start=init_models, cpu=8, memory="32Gi", gpu="A100-40", timeout=-1, ) def handler(): from fastapi import FastAPI, HTTPException import subprocess import json from pathlib import Path import uuid from typing import Dict app = FastAPI() # This is where you specify the path to your workflow file. # Make sure "workflow_api.json" exists in the same directory as this script. WORKFLOW_FILE = Path(__file__).parent / "workflow_api.json" OUTPUT_DIR = Path("/root/comfy/ComfyUI/output") @app.post("/generate") async def generate(item: Dict): if not WORKFLOW_FILE.exists(): raise HTTPException(status_code=500, detail="Workflow file not found.") workflow_data = json.loads(WORKFLOW_FILE.read_text()) workflow_data["6"]["inputs"]["text"] = item["prompt"] request_id = uuid.uuid4().hex workflow_data["9"]["inputs"]["filename_prefix"] = request_id new_workflow_file = Path(f"{request_id}.json") new_workflow_file.write_text(json.dumps(workflow_data, indent=4)) # Run inference cmd = f"comfy run --workflow {new_workflow_file} --wait --timeout 1200 --verbose" subprocess.run(cmd, shell=True, check=True) image_files = list(OUTPUT_DIR.glob("*")) # Find the latest image latest_image = max( (f for f in image_files if f.suffix.lower() in {".png", ".jpg", ".jpeg"}), key=lambda f: f.stat().st_mtime, default=None ) if not latest_image: raise HTTPException(status_code=404, detail="No output image found.") output_file = Output(path=latest_image) output_file.save() public_url = output_file.public_url(expires=-1) print(public_url) return {"output_url": public_url} return app Prepare a Workflow File Create a workflow_api.json file in the same directory as app.py. This file should contain your ComfyUI workflow, which you can export from the ComfyUI web interface. You can also store your workflow_api.json file in your Volume and use it like WORKFLOW_FILE = Path("/your_volume/workflow_api.json") Deploy the API Copy beam deploy api.py:handler Use the API Send a POST request to the /generate endpoint with a JSON payload containing a prompt: Copy curl -X POST https://12345.apps.beam.cloud/generate \ -H 'Content-Type: application/json' \ -H 'Authorization: Bearer YOUR_BEAM_API' \ -d '{"prompt": "A cat image"}' The response will include a public URL to the generated image: Copy { "output_url": "https://app.beam.cloud/output/id/9a003889-8345-4969-bdf8-2808eebc1c4b" } Was this page helpful? Yes No Qwen2.5-7B with SGLang
 Audio and Transcription Parler TTS This guide demonstrates how to set up and run the Parler TTS text-to-speech model as a serverless API on Beam. View the Code See the code for this example on Github. ​ Introduction Parler-TTS Mini is a lightweight text-to-speech (TTS) model, trained on 45K hours of audio data, that can generate high-quality, natural sounding speech with features that can be controlled using a simple text prompt. This guide explains how to deploy and use it on Beam. ​ Deployment Setup Define the model and its dependencies using the parlertts_image: Copy from beam import endpoint, env, Image, Output if env.is_remote(): from parler_tts import ParlerTTSForConditionalGeneration from transformers import AutoTokenizer import soundfile as sf import uuid def load_models(): model = ParlerTTSForConditionalGeneration.from_pretrained( "parler-tts/parler-tts-mini-v1").to("cuda:0") tokenizer = AutoTokenizer.from_pretrained("parler-tts/parler-tts-mini-v1") return model, tokenizer parlertts_image = ( Image( python_version="python3.10", python_packages=[ "torch", "transformers", "soundfile", "Pillow", "wheel", "packaging", "ninja", "huggingface_hub[hf-transfer]", ], ) .add_commands( [ "apt update && apt install git -y", "pip install git+https://github.com/huggingface/parler-tts.git", ] ) .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1") ) ​ Inference Function The generate_speech function processes text and generates speech audio: Copy @endpoint( name="parler-tts", on_start=load_models, cpu=2, memory="32Gi", gpu="A10G", gpu_count=2, image=parlertts_image ) def generate_speech(context, **inputs): model, tokenizer = context.on_start_value prompt = inputs.pop("prompt", None) description = inputs.pop("description", None) if not prompt or not description: return {"error": "Please provide a prompt and description"} device = "cuda:0" input_ids = tokenizer( description, return_tensors="pt").input_ids.to(device) prompt_input_ids = tokenizer( prompt, return_tensors="pt").input_ids.to(device) generation = model.generate( input_ids=input_ids, prompt_input_ids=prompt_input_ids) audio_arr = generation.cpu().numpy().squeeze() file_name = f"/tmp/parler_tts_out_{uuid.uuid4()}.wav" sf.write(file_name, audio_arr, model.config.sampling_rate) output_file = Output(path=file_name) output_file.save() public_url = output_file.public_url(expires=1200000000) print(public_url) return {"output_url": public_url} ​ Deployment Deploy the API to Beam: Copy beam deploy app.py:generate_speech ​ API Usage Send a POST request with the following JSON payload: Copy { "prompt": "Your text to convert to speech", "description": "Description of the voice/style" } ​ Example Request Copy { "prompt": "On Beam run AI workloads anywhere with zero complexity. One line of Python, global GPUs, full control!!!", "description": "A female speaker delivers a slightly expressive and animated speech with a moderate speed and pitch. The recording is of very high quality, with the speaker's voice sounding clear and very close up." } ​ Example Response A generated audio file will be returned: Copy { "output_url": "https://app.beam.cloud/output/id/dc443a80-7fcc-42bc-928b-4605e41b0825" } ​ Audio Example Here’s an example of the generated audio output: ​ Summary You’ve successfully deployed a Parler TTS text-to-speech API using Beam. Was this page helpful? Yes No
+Run an OpenAI-Compatible vLLM Server
+In this example we are going to use vLLM to host an OpenAI compatible InternVL2.5 8B API on Beam.
+
+View the Code
+See the code for this example on Github.
+
+​
+Introduction to vLLM
+vLLM is a high-performance, easy-to-use library for LLM inference. It can be up to 24 times faster than HuggingFace’s Transformers library and it allows you to easily setup an OpenAI compatible API for your LLM. Additionally, a number of LLMs (like Llama 3.1) support LoRA. This means that you can easily follow our LoRA guide and host your resulting model using vLLM.
+
+The key to vLLM’s performance is Paged Attention. In LLMs, input tokens produce attention keys and value tensors, which are typically stored in GPU memory. Paged Attention stores these continuous keys and values in non-contiguous memory by partitioning them into blocks that are fetched on a need-to-use basis.
+
+Because the blocks do not need to be contiguous in memory, we can manage the keys and values in a more flexible way as in OS’s virtual memory: one can think of blocks as pages, tokens as bytes, and sequences as processes. The contiguous logical blocks of a sequence are mapped to non-contiguous physical blocks via a block table. - vLLM Explainer Doc
+
+​
+Hosting an OpenAI-Compatible Chat API with vLLM
+With vLLM, we can host a fully functional chat API that we can use with already built SDKs to interact with. You could build this functionality yourself, but vLLM provides a great out of the box solution as well.
+
+​
+Initial Setup
+To get started with vLLM on Beam, we can use the VLLM class from the Beam SDK. This class supports all of the flags and arguments of the vLLM command line tool as arguments.
+
+​
+Setup Compute Environment
+Let’s take a look at the code required to deploy the InternVL2.5 8B model from OpenGVLab. Just like a normal Beam application, we start by defining the environment. For this model, we will use 8 CPU, 16GB of memory, and two A10G GPU. With those details set, we can focus on what arguments we need to pass to our vLLM server.
+
+models.py
+
+Copy
+from beam.integrations import VLLM, VLLMArgs
+
+INTERNVL2_5 = "OpenGVLab/InternVL2_5-8B"
+
+internvl = VLLM(
+    name=INTERNVL2_5.split("/")[-1],
+    cpu=8,
+    memory="32Gi",
+    gpu="A10G",
+    gpu_count=2,
+    vllm_args=VLLMArgs(
+        model=INTERNVL2_5,
+        served_model_name=[INTERNVL2_5],
+        trust_remote_code=True,
+        max_model_len=4096,
+        gpu_memory_utilization=0.95,
+        limit_mm_per_prompt={"image": 2},
+    )
+)
+The first argument we need to set is the model. Then, for this model, we will set the trust_remote_code to True since it will be using tool calling functionality. Finally, we will set the max_model_len to 4096, which is the maximum number of tokens that can be used in a single request and the limit_mm_per_prompt to 2, which limits the number of images that can be used in a single request.
+
+The equivalent vLLM command line tool command would be:
+
+
+Copy
+vllm serve OpenGVLab/InternVL2_5-8B --trust-remote-code \
+--max-model-len 4096 --limit-mm-per-prompt image=2
+​
+Deploying the API
+To deploy our model, we can run the following command:
+
+
+Copy
+beam deploy models.py:internvl
+The output will look like this:
+
+
+Copy
+=> Building image
+=> Using cached image
+=> Syncing files
+Reading .beamignore file
+Collecting files from /Users/minzi/Dev/beam/ex-repo/vllm
+Added /Users/minzi/Dev/beam/ex-repo/vllm/models.py
+Added /Users/minzi/Dev/beam/ex-repo/vllm/tool_chat_template_mistral.jinja
+Added /Users/minzi/Dev/beam/ex-repo/vllm/README.md
+Added /Users/minzi/Dev/beam/ex-repo/vllm/chat.py
+Added /Users/minzi/Dev/beam/ex-repo/vllm/inference.py
+Collected object is 14.46 KB
+=> Files already synced
+=> Deploying
+=> Deployed 🎉
+=> Invocation details
+curl -X POST 'https://internvl-15c4487-v4.app.beam.cloud' \
+-H 'Connection: keep-alive' \
+-H 'Content-Type: application/json' \
+-H 'Authorization: Bearer YOUR_TOKEN' \
+-d '{}'
+​
+Using the API
+​
+Pre-requisites
+Once your function is deployed, you can interact with it using the OpenAI Python client.
+
+To get started, you can clone the example repository and run the chat.py script.
+
+Make sure you have the openai library installed locally, since that is how we interact with the deployed API.
+
+
+Copy
+git clone https://github.com/beam-cloud/examples.git
+cd examples/vllm
+pip install openai
+python chat.py  
+​
+Starting a Dialogue
+You will be greeted with a prompt to enter the URL of your deployed function.
+
+Once you enter the URL, the container will initialize on Beam and you will be able to interact with the model.
+
+
+Copy
+Welcome to the CLI Chat Application!
+
+Type 'quit' to exit the conversation.
+
+Enter the app URL: https://internvl-instruct-15c4487-v3.app.beam.cloud
+
+Model OpenGVLab/InternVL2_5-8B is ready
+
+Question: What is in this image?
+
+Image link (press enter to skip): https://upload.wikimedia.org/wikipedia/commons/7/74/White_domesticated_duck,_stretching.jpg
+
+Assistant:  The image you've shared is of a white duck standing on a grassy field. The duck, with its distinctive orange beak and feet, is facing to the left. 
+To host other models, you can simply change the arguments you pass into the VLLM class.
+
+
+Yi Coder 9B Chat
+
+Mistral 7B Instruct v0.3
+
+Copy
+from beam.integrations import VLLM, VLLMArgs
+
+YI_CODER_CHAT = "01-ai/Yi-Coder-9B-Chat"
+
+yicoder_chat = VLLM(
+    name=YI_CODER_CHAT.split("/")[-1],
+    cpu=8,
+    memory="16Gi",
+    gpu="A100-40",
+    vllm_args=VLLMArgs(
+        model=YI_CODER_CHAT,
+        served_model_name=[YI_CODER_CHAT],
+        task="chat",
+        trust_remote_code=True,
+        max_model_len=8096,
+    ),
+)
+Was this page helpful?
+
+
+Yes
+
+No

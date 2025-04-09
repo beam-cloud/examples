@@ -41,12 +41,12 @@ def run_beam_command(command: list[str], venv_path: str = None) -> dict[str, Any
 
 
 @server.tool()
-async def deploy_beam_pod(absolute_path_to_app: str) -> dict[str, Any]:
+async def deploy_beam_pod(path_to_app: str) -> dict[str, Any]:
     """
     Deploy a Beam Pod on Beam using the provided parameters.
 
     Args:
-        absolute_path_to_app: The absolute path to the Beam Pod to deploy.
+        path_to_app: The absolute path to the Beam Pod to deploy.
 
     Returns:
         A dictionary containing deployment results.
@@ -54,8 +54,8 @@ async def deploy_beam_pod(absolute_path_to_app: str) -> dict[str, Any]:
     Raises:
         Exception: If deployment fails for any reason.
     """
-    venv_path = os.path.dirname(absolute_path_to_app)
-    app_name = os.path.basename(absolute_path_to_app)
+    venv_path = os.path.dirname(path_to_app)
+    app_name = os.path.basename(path_to_app)
     try:
         result = run_beam_command(["python", f"{app_name}"], venv_path)
         return result
@@ -66,14 +66,14 @@ async def deploy_beam_pod(absolute_path_to_app: str) -> dict[str, Any]:
 
 @server.tool()
 async def deploy_beam_app(
-    absolute_path_to_app: str, functionName: str
+    path_to_app: str, function_name: str
 ) -> dict[str, Any]:
     """
     Deploy a Beam application using the provided parameters.
 
     Args:
-        absolute_path_to_app: The absolute path to the Beam application to deploy.
-        functionName: The name of the function to deploy.
+        path_to_app: The absolute path to the Beam application to deploy.
+        function_name: The name of the function to deploy.
 
     Returns:
         A dictionary containing deployment results.
@@ -81,12 +81,12 @@ async def deploy_beam_app(
     Raises:
         Exception: If deployment fails for any reason.
     """
-    venv_path = os.path.dirname(absolute_path_to_app)
-    app_name = os.path.basename(absolute_path_to_app)
+    venv_path = os.path.dirname(path_to_app)
+    app_name = os.path.basename(path_to_app)
 
     try:
         result = run_beam_command(
-            ["beam", "deploy", f"{app_name}:{functionName}"], venv_path
+            ["beam", "deploy", f"{app_name}:{function_name}"], venv_path
         )
         return result
     except Exception as e:
@@ -103,7 +103,7 @@ async def build_beam_app(python_code: str) -> str:
         python_code (str): The Python code to save.
 
     Returns:
-        absolute_path_to_app (str): The absolute path to the saved Beam application.
+        path_to_app (str): The absolute path to the saved Beam application.
 
     Raises:
         Exception: If building fails for any reason.
@@ -112,17 +112,17 @@ async def build_beam_app(python_code: str) -> str:
         # Create a temporary app file path to store the Beam application
         temp_dir = tempfile.gettempdir()
         app_name = f"beam_app_{int(time.time())}.py"
-        absolute_path_to_app = os.path.join(temp_dir, app_name)
+        path_to_app = os.path.join(temp_dir, app_name)
 
         # Ensure the target directory exists
-        os.makedirs(os.path.dirname(absolute_path_to_app), exist_ok=True)
+        os.makedirs(os.path.dirname(path_to_app), exist_ok=True)
 
         # Write the provided Python code to the file
-        with open(absolute_path_to_app, "w", encoding="utf-8") as file:
+        with open(path_to_app, "w", encoding="utf-8") as file:
             file.write(python_code)
 
-        print(f"Beam application saved successfully at {absolute_path_to_app}")
-        return absolute_path_to_app
+        print(f"Beam application saved successfully at {path_to_app}")
+        return path_to_app
     except Exception as e:
         print(f"Failed to build Beam app: {e}")
         raise
@@ -150,4 +150,4 @@ async def get_beam_docs() -> str:
 
 
 if __name__ == "__main__":
-    server.run()
+    server.run("stdio")
