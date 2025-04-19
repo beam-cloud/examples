@@ -8,7 +8,7 @@ To deploy: python app.py
 from beam import Pod, Image
 
 OPENVSCODE_SERVER_VERSION = "1.97.2"
-vscode_port = 8080
+VSCODE_PORT = 8080
 
 image = Image("python3.12").add_commands(
     [
@@ -23,7 +23,7 @@ image = Image("python3.12").add_commands(
 
 vscode_server = Pod(
     image=image,
-    ports=vscode_port,
+    ports=VSCODE_PORT,
     cpu=4,
     memory="8Gi",
     entrypoint=[
@@ -31,7 +31,7 @@ vscode_server = Pod(
         "--host",
         "::",
         "--port",
-        str(vscode_port),
+        str(VSCODE_PORT),
         "--without-connection-token",
         "--disable-workspace-trust",
         "--telemetry-level",
