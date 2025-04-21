@@ -38,6 +38,7 @@ jobs:
           mkdir ~/.beta9
           touch ~/.beta9/config.ini
           echo $BETA9_CONFIG >> ~/.beta9/config.ini
+          cat ~/.beta9/config.ini
 
       - name: Deploy
         run: cd tests && beta9 deploy app.py:run_tests -n integration-tests
