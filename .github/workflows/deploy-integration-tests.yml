@@ -35,7 +35,7 @@ jobs:
         run: |
           poetry export --without-hashes --format=requirements.txt > requirements.txt
           pip install -r requirements.txt
-          echo $BEAM_TOKEN | beam config create default --gateway-host gateway.stage.beam.cloud --gateway-port 443
+          { echo ""; echo ""; echo $BEAM_TOKEN } | beta9 config create test5 --gateway-host gateway.stage.beam.cloud --gateway-port 443
 
       - name: Deploy
         run: cd tests && beam deploy app.py:run_tests -n integration-tests
