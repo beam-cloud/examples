@@ -31,12 +31,12 @@ jobs:
         
       - name: Configure Beam
         env:
-          BEAM_TOKEN: ${{ secrets.BEAM_INTEGRATION_TEST_TOKEN }}
+          BETA9_CONFIG: ${{ secrets.BETA9_CONFIG }}
         run: |
           poetry export --without-hashes --format=requirements.txt > requirements.txt
           pip install -r requirements.txt
-          pip install beta9
-          { echo ""; echo ""; echo $BEAM_TOKEN } | beta9 config create default --gateway-host gateway.stage.beam.cloud --gateway-port 443
+          mkdir -p ~/.beta9/config.ini
+          echo $BETA9_CONFIG >> ~/.beta9/config.ini
 
       - name: Deploy
         run: cd tests && beta9 deploy app.py:run_tests -n integration-tests
