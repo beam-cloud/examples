@@ -1,0 +1,2 @@
+token config create test1 --token testtoken --gateway-host gateway.stage.beam.cloud --gateway-port 443
+token config create test1 --token testtoken --gateway-host gateway.stage.beam.cloud --gateway-port 443
