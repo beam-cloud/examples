@@ -31,7 +31,7 @@ jobs:
 
       - name: Configure Beam
         env:
-          BEAM_TOKEN: ${{ secrets.BEAM_TOKEN }}
+          BEAM_TOKEN: ${{ secrets.BEAM_INTEGRATION_TEST_TOKEN }}
         run: |
           pip install beam-client
           echo $BEAM_TOKEN | beam config create default --gateway-host gateway.stage.beam.cloud --gateway-port 443
