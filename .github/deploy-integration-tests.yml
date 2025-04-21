@@ -1,0 +1,38 @@
+name: Deploy Integration Tests
+
+on: [push]
+
+jobs:
+  lint_and_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v2.2.1
+        with:
+          python-version: 3.12
+
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+
+      - name: Install and configure Poetry
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.3
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Install Dependencies
+        run: poetry install --no-interaction --no-root
+        if: steps.cache.outputs.cache-hit != 'true'
+
+      - name: Configure Beam
+        env:
+          BEAM_TOKEN: ${{ secrets.BEAM_INTEGRATION_TEST_TOKEN }}
+        run: beam config create default --token $BEAM_TOKEN --gateway-host gateway.stage.beam.cloud --gateway-port 443
+
+      - name: Deploy
+        run: cd tests && beam deploy app.py:run_tests -n integration-tests
