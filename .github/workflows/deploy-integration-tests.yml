@@ -25,15 +25,16 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
 
-      - name: Install Dependencies
-        run: poetry install --no-interaction --no-root
-        if: steps.cache.outputs.cache-hit != 'true'
-
+      # - name: Install Dependencies
+      #   run: poetry install --no-interaction --no-root
+      #   if: steps.cache.outputs.cache-hit != 'true'
+        
       - name: Configure Beam
         env:
           BEAM_TOKEN: ${{ secrets.BEAM_INTEGRATION_TEST_TOKEN }}
         run: |
-          pip install beam-client
+          poetry export --without-hashes --format=requirements.txt > requirements.txt
+          pip install -r requirements.txt
           echo $BEAM_TOKEN | beam config create default --gateway-host gateway.stage.beam.cloud --gateway-port 443
 
       - name: Deploy
