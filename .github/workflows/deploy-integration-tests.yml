@@ -1,6 +1,9 @@
 name: Deploy Integration Tests
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   deploy-integration-tests:
