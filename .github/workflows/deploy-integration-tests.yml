@@ -1,0 +1,47 @@
+name: Deploy Integration Tests
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-integration-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v2.2.1
+        with:
+          python-version: 3.12
+
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+
+      - name: Install and configure Poetry
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.3
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+        
+      - name: Install
+        run: |
+          poetry export --without-hashes --format=requirements.txt > requirements.txt
+          pip install -r requirements.txt
+
+      - name: Configure Beta9
+        env:
+          BETA9_TOKEN: ${{ secrets.BEAM_INTEGRATION_TEST_TOKEN }}
+        run: |
+          touch inputs.txt
+          echo gateway.stage.beam.cloud >> inputs.txt
+          echo 443 >> inputs.txt
+          echo $BETA9_TOKEN >> inputs.txt
+          cat inputs.txt | beta9 config create default
+
+      - name: Deploy
+        run: cd tests && beta9 deploy app.py:run_tests -n integration-tests
