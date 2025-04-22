@@ -29,16 +29,20 @@ jobs:
       #   run: poetry install --no-interaction --no-root
       #   if: steps.cache.outputs.cache-hit != 'true'
         
-      - name: Configure Beam
-        env:
-          BETA9_CONFIG: ${{ secrets.BETA9_CONFIG }}
+      - name: Install
         run: |
           poetry export --without-hashes --format=requirements.txt > requirements.txt
           pip install -r requirements.txt
-          mkdir ~/.beta9
-          touch ~/.beta9/config.ini
-          echo $BETA9_CONFIG >> ~/.beta9/config.ini
-          cat ~/.beta9/config.ini
+
+      - name: Configure Beta9
+        env:
+          BETA9_TOKEN: ${{ secrets.BEAM_INTEGRATION_TEST_TOKEN }}
+        run: |
+          touch inputs.txt
+          echo gateway.stage.beam.cloud >> inputs.txt
+          echo 443 >> inputs.txt
+          echo $BETA9_TOKEN >> inputs.txt
+          cat inputs.txt | beta9 config create default
 
       - name: Deploy
         run: cd tests && beta9 deploy app.py:run_tests -n integration-tests
