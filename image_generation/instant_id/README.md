@@ -4,10 +4,11 @@
 
 This repository contains the implementation of InstantID as a Beam endpoint.
 
-In your shell, serve this by running:
+In your shell, start by uploading the model:
 
-`beam serve app.py:generate_image
-`
+`python upload.py`
+
+After that, run `beam deploy app.py:generate_image` to deploy the model
 
 To use this endpoint with curl:
 
@@ -15,7 +16,7 @@ To use this endpoint with curl:
 curl -X POST 'https://your-beam-endpoint.app.beam.cloud' \
 -H 'Connection: keep-alive' \
 -H 'Content-Type: application/json' \
--H 'Authorization: YOU_BEAM_API' \
+-H 'Authorization: YOUR_BEAM_API_KEY' \
 -d '{ "image": "https://hips.hearstapps.com/hmg-prod/images/screen-shot-2024-05-22-at-3-00-35-pm-664e410d9114a.png",
     "prompt": "analog film photo of a man. faded film, desaturated, 35mm photo, grainy, vignette"
   }'

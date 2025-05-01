@@ -1,4 +1,6 @@
-from beam import endpoint, Image, Output
+from beam import endpoint, Image, Output, Volume
+
+VOLUME_PATH = "/instant-id"
 
 image = (
     Image(python_version="python3.11")
@@ -32,58 +34,21 @@ image = (
 )
 
 
-def load_models():
-    import sys
-    from huggingface_hub import hf_hub_download
-    import gdown
-    import os
-
-    sys.path.append("/instantid")
-    os.chdir("/instantid")
-
-    hf_hub_download(
-        repo_id="InstantX/InstantID",
-        filename="ControlNetModel/config.json",
-        local_dir="./checkpoints",
-    )
-    hf_hub_download(
-        repo_id="InstantX/InstantID",
-        filename="ControlNetModel/diffusion_pytorch_model.safetensors",
-        local_dir="./checkpoints",
-    )
-    hf_hub_download(
-        repo_id="InstantX/InstantID",
-        filename="ip-adapter.bin",
-        local_dir="./checkpoints",
-    )
-    hf_hub_download(
-        repo_id="latent-consistency/lcm-lora-sdxl",
-        filename="pytorch_lora_weights.safetensors",
-        local_dir="./checkpoints",
-    )
-    gdown.download(
-        url="https://drive.google.com/file/d/18wEUfMNohBJ4K3Ly5wpTejPfDzp-8fI8/view?usp=sharing",
-        output="./models/",
-        quiet=False,
-        fuzzy=True,
-    )
-    os.system("unzip ./models/antelopev2.zip -d ./models/")
-
-
 @endpoint(
-    on_start=load_models,
-    name="instantid",
+    name="instant-id",
     cpu=12,
     memory="32Gi",
     gpu="A10G",
     image=image,
+    volumes=[Volume(name="instant-id", mount_path=VOLUME_PATH)],
 )
 def generate_image(
     image: str = "https://live-production.wcms.abc-cdn.net.au/a241657894f4d79f0c3ea0705f0f1f07?impolicy=wcms_crop_resize&cropH=1989&cropW=2992&xPos=8&yPos=8&width=862&height=575",
     prompt: str = "film noir style, ink sketch|vector, male man, highly detailed, sharp focus, ultra sharpness, monochrome, high contrast, dramatic shadows, 1940s style, mysterious, cinematic",
 ):
-    import os
     import sys
+
+    sys.path.append("/instantid")
     from diffusers.utils import load_image
     from diffusers.models import ControlNetModel
     import cv2
@@ -98,24 +63,21 @@ def generate_image(
         draw_kps,
     )
 
-    sys.path.append("/instantid")
-    os.chdir("/instantid")
-
     app = FaceAnalysis(
         name="antelopev2",
-        root="./",
+        root=VOLUME_PATH,
         providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
     )
     app.prepare(ctx_id=0, det_size=(640, 640))
 
-    face_adapter = "./checkpoints/ip-adapter.bin"
-    controlnet_path = "./checkpoints/ControlNetModel"
+    face_adapter = f"{VOLUME_PATH}/checkpoints/ip-adapter.bin"
+    controlnet_path = f"{VOLUME_PATH}/checkpoints/ControlNetModel/ControlNetModel"
+    base_model = f"{VOLUME_PATH}/weights"
 
     controlnet = ControlNetModel.from_pretrained(
         controlnet_path, torch_dtype=torch.float16
     )
 
-    base_model = "wangqixun/YamerMIX_v8"
     pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
         base_model, controlnet=controlnet, torch_dtype=torch.float16
     )
