@@ -1,7 +1,7 @@
 from beam import function
 
 
-@function(cpu=0.1)
+@function(app="examples", cpu=0.1)
 def square(i: int):
     return i**2
 
