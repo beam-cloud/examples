@@ -14,6 +14,7 @@ def download_models():
 
 
 @endpoint(
+    app="examples",
     on_start=download_models,
     volumes=[Volume(name="weights", mount_path=CACHE_PATH)],
     cpu=1,
