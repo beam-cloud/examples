@@ -1,8 +1,7 @@
 import os
 import requests
 import urllib.parse
-import json
-from beta9 import function, Volume, Image
+from beam import function, Volume, Image
 
 @function(
   app="volume-imports",

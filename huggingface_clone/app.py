@@ -1,4 +1,4 @@
-from beta9 import function, Volume, Image
+from beam import function, Volume, Image
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 @function(
