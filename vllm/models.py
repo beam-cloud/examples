@@ -1,27 +1,28 @@
 from beam.integrations import VLLM, VLLMArgs
 from beam import Image
 
-INTERNVL2_5 = "OpenGVLab/InternVL2_5-8B"
+INTERNVL3_AWQ = "OpenGVLab/InternVL3-8B-AWQ"
 YI_CODER_CHAT = "01-ai/Yi-Coder-9B-Chat"
 MISTRAL_INSTRUCT = "mistralai/Mistral-7B-Instruct-v0.3"
 DEEPSEEK_R1 = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
 
 internvl = VLLM(
-    name=INTERNVL2_5.split("/")[-1],
-    cpu=8,
-    memory="32Gi",
+    name=INTERNVL3_AWQ.split("/")[-1],
+    cpu=4,
+    memory="16Gi",
     gpu="A10G",
-    gpu_count=2,
+    gpu_count=1,
     image=(Image(python_version="python3.12")).add_python_packages(
         ["vllm==0.6.4.post1"]
     ),
     vllm_args=VLLMArgs(
-        model=INTERNVL2_5,
-        served_model_name=[INTERNVL2_5],
+        model=INTERNVL3_AWQ,
+        served_model_name=[INTERNVL3_AWQ],
         trust_remote_code=True,
         max_model_len=4096,
-        gpu_memory_utilization=0.95,
+        gpu_memory_utilization=0.90,
         limit_mm_per_prompt={"image": 2},
+        quantization="awq",
     ),
 )
 
