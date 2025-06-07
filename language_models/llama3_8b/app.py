@@ -6,25 +6,37 @@ if env.is_remote():
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Model parameters
-MODEL_NAME = "meta-llama/Meta-Llama-3-8B-Instruct"
+MODEL_NAME = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 MAX_LENGTH = 512
-TEMPERATURE = 1.0
-TOP_P = 0.95
-TOP_K = 40
-REPETITION_PENALTY = 1.0
-NO_REPEAT_NGRAM_SIZE = 0
-DO_SAMPLE = True
+TEMPERATURE = 0.7
+TOP_P = 0.9
+TOP_K = 50
+REPETITION_PENALTY = 1.05
+NO_REPEAT_NGRAM_SIZE = 2
+DO_SAMPLE = True 
+NUM_BEAMS = 1
+EARLY_STOPPING = True
 
-CACHE_PATH = "./cached_models"
+BEAM_VOLUME_PATH = "./cached_models"
 
 
 # This runs once when the container first starts
 def load_models():
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, cache_dir=CACHE_PATH)
+    tokenizer = AutoTokenizer.from_pretrained(
+        MODEL_NAME, 
+        cache_dir=BEAM_VOLUME_PATH,
+        padding_side='left'
+    )
     tokenizer.pad_token = tokenizer.eos_token
     model = AutoModelForCausalLM.from_pretrained(
-        MODEL_NAME, device_map="auto", torch_dtype=torch.float16, cache_dir=CACHE_PATH
+        MODEL_NAME, 
+        device_map="auto", 
+        torch_dtype=torch.float16, 
+        cache_dir=BEAM_VOLUME_PATH,
+        use_cache=True,
+        low_cpu_mem_usage=True
     )
+    model.eval()
     return model, tokenizer
 
 
@@ -38,22 +50,25 @@ image = (
             "huggingface_hub[hf-transfer]",
         ]
     )
-    .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1")
+    .with_envs({
+        "HF_HUB_ENABLE_HF_TRANSFER": "1",
+        "TOKENIZERS_PARALLELISM": "false",
+        "CUDA_VISIBLE_DEVICES": "0",
+    })
 )
 
 
 @endpoint(
     secrets=["HF_TOKEN"],
     on_start=load_models,
-    name="meta-llama-3-8b-instruct",
+    name="meta-llama-3.1-8b-instruct",
     cpu=2,
-    memory="32Gi",
-    gpu_count=2,
+    memory="16Gi",
     gpu="A10G",
     volumes=[
         Volume(
             name="cached_models",
-            mount_path=CACHE_PATH,
+            mount_path=BEAM_VOLUME_PATH,
         )
     ],
     image=image,
@@ -68,7 +83,7 @@ def generate_text(context, **inputs):
         return {"error": "Please provide messages for text generation."}
 
     generate_args = {
-        "max_length": inputs.get("max_tokens", MAX_LENGTH),
+        "max_new_tokens": inputs.get("max_tokens", MAX_LENGTH),
         "temperature": inputs.get("temperature", TEMPERATURE),
         "top_p": inputs.get("top_p", TOP_P),
         "top_k": inputs.get("top_k", TOP_K),
@@ -76,22 +91,35 @@ def generate_text(context, **inputs):
         "no_repeat_ngram_size": inputs.get(
             "no_repeat_ngram_size", NO_REPEAT_NGRAM_SIZE
         ),
+        "num_beams": inputs.get("num_beams", NUM_BEAMS),
+        "early_stopping": inputs.get("early_stopping", EARLY_STOPPING),
         "do_sample": inputs.get("do_sample", DO_SAMPLE),
         "use_cache": True,
         "eos_token_id": tokenizer.eos_token_id,
         "pad_token_id": tokenizer.pad_token_id,
     }
 
-    model_inputs = tokenizer.apply_chat_template(
+    model_inputs_str = tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     )
-    inputs = tokenizer(model_inputs, return_tensors="pt", padding=True)
-    input_ids = inputs["input_ids"].to("cuda")
-    attention_mask = inputs["attention_mask"].to("cuda")
+    
+    tokenized_inputs = tokenizer(
+        model_inputs_str, 
+        return_tensors="pt", 
+        padding=True, 
+        truncation=True, 
+        max_length=2048
+    )
+    input_ids = tokenized_inputs["input_ids"].to("cuda")
+    attention_mask = tokenized_inputs["attention_mask"].to("cuda")
+    input_ids_length = input_ids.shape[-1]
 
     with torch.no_grad():
         outputs = model.generate(
-            input_ids=input_ids, attention_mask=attention_mask, **generate_args
+            input_ids=input_ids, 
+            attention_mask=attention_mask, 
+            **generate_args
         )
-        output_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        new_tokens = outputs[0][input_ids_length:]
+        output_text = tokenizer.decode(new_tokens, skip_special_tokens=True)
         return {"output": output_text}

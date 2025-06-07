@@ -86,7 +86,7 @@ class ChatApplication:
         self, user_input: str, img_link: Optional[str] = None, stream: bool = False
     ) -> str:
         """Process user input and return assistant's response."""
-        if self.model == "OpenGVLab/InternVL2_5-8B" and img_link:
+        if self.model == "OpenGVLab/InternVL3-8B-AWQ" and img_link:
             self.conversation_history.append(
                 {
                     "role": "user",
@@ -178,7 +178,7 @@ def chat() -> None:
 
             # Handle image input for vision models
             img_link = None
-            if model == "OpenGVLab/InternVL2_5-8B":
+            if model == "OpenGVLab/InternVL3-8B-AWQ":
                 img_link = Prompt.ask(
                     "[bold yellow]Image link (press enter to skip)[/bold yellow]"
                 )
