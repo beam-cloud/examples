@@ -1,6 +1,6 @@
 from beam import Image, Output, function
 
-@function(image=Image().add_python_packages(["pillow"]))
+@function(app="examples", image=Image().add_python_packages(["pillow"]))
 def save_image():
     from PIL import Image as PILImage
 
