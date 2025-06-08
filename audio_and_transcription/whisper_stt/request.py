@@ -12,9 +12,11 @@ import time
 import subprocess
 import json
 
-BEAM_AUTH_TOKEN = "E-9JmYZKCt0swHkPLxzASJJqihajCqeZZED-DkXGmWflEMAVm-IqWN5ruEkB5mYiAt-0lWpCMxK7_LKUzLOF4A=="  # Add your Beam Auth Token, you can find it in the dashboard by clicking the 'Call API' button on your app
 
-url = "https://whisper-9abfb8b-v3.app.beam.cloud"
+BEAM_AUTH_TOKEN = ""  # Add your Beam Auth Token, you can find it in the dashboard by clicking the 'Call API' button on your app
+
+url = "https://app.beam.cloud/endpoint/whisper/v1"
+
 headers = {
     "Connection": "keep-alive",
     "Authorization": f"Bearer {BEAM_AUTH_TOKEN}",
