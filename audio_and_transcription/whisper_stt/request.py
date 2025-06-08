@@ -3,17 +3,18 @@
 
 This script is used to benchmark the inference time and cold boot.
 
-Requests are sent in batches. In between batches, we use the Beam CLI to kill the container 
+Requests are sent in batches. In between batches, we use the Beam CLI to kill the container
 that is running in order to demonstrate the cold boot latency (`beam container list` and `beam container stop`)
 """
 
 import requests
 import time
 import subprocess
+import json
 
-BEAM_AUTH_TOKEN = ""  # Add your Beam Auth Token, you can find it in the dashboard by clicking the 'Call API' button on your app
+BEAM_AUTH_TOKEN = "E-9JmYZKCt0swHkPLxzASJJqihajCqeZZED-DkXGmWflEMAVm-IqWN5ruEkB5mYiAt-0lWpCMxK7_LKUzLOF4A=="  # Add your Beam Auth Token, you can find it in the dashboard by clicking the 'Call API' button on your app
 
-url = "https://app.beam.cloud/endpoint/whisper/v1"
+url = "https://whisper-9abfb8b-v3.app.beam.cloud"
 headers = {
     "Connection": "keep-alive",
     "Authorization": f"Bearer {BEAM_AUTH_TOKEN}",
@@ -59,16 +60,18 @@ for batch in range(total_requests // batch_size):
 
     # Run "beam container list" to show all running containers
     result = subprocess.run(
-        ["beam", "container", "list"], capture_output=True, text=True
+        ["beam", "container", "list", "--format", "json"],
+        capture_output=True,
+        text=True,
     )
     print(result.stdout)
 
     # Run "beam container stop" for each container to demonstrate cold boot latency
-    lines = result.stdout.split("\n")
+    containers = json.loads(result.stdout)
     container_ids = []
-    for line in lines:
-        if "RUNNING" in line:
-            container_id = line.split()[0]
+    for container in containers:
+        if container.get("status") == "RUNNING":
+            container_id = container.get("container_id")
             container_ids.append(container_id)
 
     for container_id in container_ids:
