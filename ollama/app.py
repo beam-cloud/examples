@@ -37,7 +37,12 @@ def load_model():
 
 
 @endpoint(
-    name="ollamap-osmosis-structure", image=image, cpu=12, memory="32Gi", gpu="A10G", on_start=load_model
+    name="ollamap-osmosis-structure",
+    image=image,
+    cpu=12,
+    memory="32Gi",
+    gpu="A10G",
+    on_start=load_model,
 )
 def generate(**inputs):
     from ollama import chat
