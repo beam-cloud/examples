@@ -1,13 +1,15 @@
 from beam import function, Volume, Image
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from huggingface_hub import snapshot_download
+import os
 
 @function(
   app="volume-imports",
   name="huggingface-clone-model",
-  secrets=["HUGGINGFACE_TOKEN"],
+  secrets=["HUGGINGFACE_TOKEN", "HF_TOKEN"],
   memory="8gb",
+  gpu="T4",
   image=Image(
-    python_packages=["torch","transformers"]
+    python_packages=["torch", "huggingface_hub"]
   ),
   volumes=[Volume(name="huggingface_models", mount_path="/huggingface_models")]
 )
@@ -16,25 +18,21 @@ def handler(*, model_name: str = ""):
         raise ValueError("model_name is required")
     
     print(f"Downloading model: {model_name}")
+    token = os.getenv("HUGGINGFACE_TOKEN") or os.getenv("HF_TOKEN")
     
     try:
-        # Download model and tokenizer
-        model = AutoModelForCausalLM.from_pretrained(model_name)
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        os.makedirs(f"/huggingface_models/{model_name}", exist_ok=True)
         
-        # Save to local volume
-        save_path = f"/huggingface_models/{model_name.replace('/', '_')}"
-        model.save_pretrained(save_path)
-        tokenizer.save_pretrained(save_path)
-        print(f"Model and tokenizer saved to: {save_path}")
+        path = snapshot_download(repo_id=model_name, local_dir=f"/huggingface_models/{model_name}", token=token)
+        print(f"Model downloaded to: {path}")
         
         return {
             "model_name": model_name,
-            "saved_path": save_path
+            "saved_path": path
         }
     except Exception as e:
         print(f"Failed to download model: {str(e)}")
         raise Exception(f"Failed to download model: {str(e)}")
 
 if __name__ == "__main__":
-    handler(model_name="distilbert/distilgpt2")
+    handler(model_name="tencent/Hunyuan3D-2.1")
