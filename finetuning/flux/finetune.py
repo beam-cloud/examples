@@ -72,7 +72,7 @@ VOLUME_PATH = "./flux-lora-clean"
         ])
         .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
     secrets=["HF_TOKEN"],
-    autoscaler=QueueDepthAutoscaler(min_containers=1, max_containers=3, tasks_per_container=1)
+    autoscaler=QueueDepthAutoscaler(max_containers=3, tasks_per_container=1)
 )
 def train_lora(
     image_zip: str = None,
