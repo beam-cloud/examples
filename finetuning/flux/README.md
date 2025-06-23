@@ -6,8 +6,7 @@ Implementation for fine-tuning FLUX models with LoRA using your own image datase
 
 1. **Create volume** (one-time setup):
    ```bash
-   # Beam automatically creates volumes when first used, but you can pre-create:
-   # This happens automatically when you first deploy
+   beam volume create flux-lora-finetune
    ```
 
 2. **Deploy endpoints**:
@@ -32,32 +31,34 @@ Implementation for fine-tuning FLUX models with LoRA using your own image datase
 
 ## Volume Storage
 
-The system uses a persistent Beam volume named `flux-lora` that automatically stores:
-- Training datasets in `./flux-lora/dataset/`
-- Trained models in `./flux-lora/output/`
+The system uses a persistent Beam volume named `flux-lora-finetune` that automatically stores:
 
-**Volume is created automatically** when you first deploy - no manual setup needed!
+```
+flux-lora-finetune/
+├── dataset/        # Training datasets
+└── output/         # Trained models
+```
 
 ## File Structure
 
 ```
-clean-version/
+flux/
 ├── finetune.py     # Training endpoint
 ├── inference.py    # Image generation endpoint  
 ├── upload.py       # Local dataset handling
 └── README.md       # This file
 ```
 
-## Detailed Usage
+## Training
 
-### 1. Training
+### Deploy Training Endpoint
 
-**Deploy training endpoint:**
 ```bash
 beam deploy finetune.py:train_lora --name train-lora
 ```
 
-**Start training with local images:**
+### Start Training with Local Images
+
 ```python
 from upload import upload_dataset, start_training
 
@@ -73,7 +74,8 @@ training = start_training(
 )
 ```
 
-**Training parameters:**
+### Training Parameters
+
 - `trigger_word`: Token to associate with your concept (e.g., "my_dog", "abstract_art")
 - `steps`: Training steps (default: 1000)
 - `learning_rate`: Learning rate (default: 4e-4)
@@ -81,14 +83,16 @@ training = start_training(
 - `alpha`: LoRA alpha scaling (default: 32)
 - `resolution`: Image resolution (default: 1024)
 
-### 2. Image Generation
+## Image Generation
 
-**Deploy inference endpoint:**
+### Deploy Inference Endpoint
+
 ```bash
 beam deploy inference.py:generate --name generate-image
 ```
 
-**Generate images:**
+### Generate Images
+
 ```python
 from upload import generate_image
 
@@ -102,7 +106,8 @@ result = generate_image(
 )
 ```
 
-**Generation parameters:**
+### Generation Parameters
+
 - `prompt`: Text description of desired image
 - `trigger_word`: Token used during training
 - `width/height`: Image dimensions (256-1024)
@@ -112,7 +117,7 @@ result = generate_image(
 - `negative_prompt`: What to avoid
 - `num_images`: Number to generate (1-4)
 
-### 3. Complete Workflow
+## Complete Workflow
 
 ```python
 from upload import full_workflow
@@ -181,39 +186,28 @@ ENDPOINTS = {
 
 - **Beam Dashboard**: https://app.beam.cloud/
 - **Training logs**: Available in Beam dashboard
-- **Model files**: Stored in persistent volume `flux-lora`
+- **Model files**: Stored in persistent volume `flux-lora-finetune`
 
 ## Tips
 
 **For better results:**
+```
 - Use descriptive trigger words (e.g., "vintage_car" vs "car")
 - Include trigger word in generation prompts
 - Experiment with guidance_scale (3-15 range)
 - Try different seeds for variety
+```
 
 **Training tips:**
+```
 - More steps = better quality but longer training
 - Higher rank = more capacity but larger files
-- 1024 resolution gives best quality on H100
+- Start with 512px for testing, use 768px or 1024px for final training (better quality)
+```
 
 **Generation tips:**
+```
 - Start with 20 inference steps
 - Use guidance_scale 7-10 for most prompts
 - Add negative prompts to avoid unwanted elements
-
-## Troubleshooting
-
-**Training fails:**
-- Check HF_TOKEN is set correctly
-- Verify images are valid formats
-- Monitor GPU memory usage
-
-**Generation quality poor:**
-- Try different prompts including trigger word
-- Adjust guidance_scale
-- Check if LoRA loaded correctly
-
-**Slow generation:**
-- Reduce inference steps
-- Use smaller image sizes
-- Check autoscaler settings
+```

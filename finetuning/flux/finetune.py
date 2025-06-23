@@ -9,7 +9,7 @@ import subprocess
 import requests
 from PIL import Image as PILImage
 
-VOLUME_PATH = "./flux-lora-clean"
+VOLUME_PATH = "./flux-lora-finetune"
 
 @endpoint(
     name="train-lora",
@@ -18,7 +18,7 @@ VOLUME_PATH = "./flux-lora-clean"
     memory="32Gi",
     timeout=3600,
     keep_warm_seconds=60,
-    volumes=[Volume(name="flux-lora-clean", mount_path=VOLUME_PATH)],
+    volumes=[Volume(name="flux-lora-finetune", mount_path=VOLUME_PATH)],
     image=Image(python_version="python3.11")
         .add_python_packages([
             "torch==2.6.0",
@@ -242,12 +242,35 @@ def create_dummy_dataset(dataset_dir, trigger_word, resolution):
     
     return 1
 
+def clean_old_models(trigger_word, resolution):
+    """Clean up old models for the same trigger word"""
+    output_dir = "/mnt/code/flux-lora-clean/output"
+    if not os.path.exists(output_dir):
+        return
+    
+    # Find old model directories for this trigger word
+    old_dirs = []
+    for item in os.listdir(output_dir):
+        item_path = os.path.join(output_dir, item)
+        if os.path.isdir(item_path) and trigger_word in item:
+            old_dirs.append(item_path)
+    
+    if old_dirs:
+        print(f"Cleaning up {len(old_dirs)} old model directories:")
+        for old_dir in old_dirs:
+            print(f"  Removing: {os.path.basename(old_dir)}")
+            shutil.rmtree(old_dir)
+
 def create_training_config(trigger_word, steps, learning_rate, rank, alpha, resolution):
     """Create training configuration"""
     base_dir = VOLUME_PATH
     dataset_dir = os.path.join(base_dir, "dataset")
-    output_dir = os.path.join(base_dir, "output")
+    # Make the output path absolute before it goes into the YAML
+    output_dir = os.path.abspath(os.path.join(base_dir, "output"))
     os.makedirs(output_dir, exist_ok=True)
+    
+    # Clean up old models for this trigger word
+    clean_old_models(trigger_word, resolution)
     
     config = {
         "job": "extension",
@@ -343,13 +366,32 @@ def run_training(config):
             check=True
         )
         
-        # Find trained models
-        output_dir = os.path.join(VOLUME_PATH, "output")
+        output_dir = "/mnt/code/flux-lora-clean/output"
+        print(f"Looking for trained models in: {output_dir}")
+        print(f"Output directory exists: {os.path.exists(output_dir)}")
+        
+        model_name = config["config"]["name"]
+        print(f"Looking for newly trained model: {model_name}")
+        
         trained_models = []
-        for root, dirs, files in os.walk(output_dir):
-            for file in files:
-                if file.endswith('.safetensors'):
-                    trained_models.append(os.path.join(root, file))
+        if os.path.exists(output_dir):
+            print("Contents of output directory:")
+            for root, dirs, files in os.walk(output_dir):
+                print(f"  Directory: {root}")
+                for file in files:
+                    print(f"     File: {file}")
+                    if file.endswith('.safetensors'):
+                        model_path = os.path.join(root, file)
+                        # Only include models from the current training session
+                        if model_name in model_path:
+                            trained_models.append(model_path)
+                            print(f"       Found LoRA model: {file}")
+                        else:
+                            print(f"       Skipped old model: {file}")
+        
+        print(f"Training completed! Found {len(trained_models)} new model(s)")
+        for i, model in enumerate(trained_models):
+            print(f"  {i+1}. {os.path.relpath(model, '/mnt/code/flux-lora-clean')}")
         
         return {
             "status": "success",
@@ -357,6 +399,7 @@ def run_training(config):
         }
         
     except subprocess.CalledProcessError as e:
+        print(f"Training failed: {str(e)}")
         return {
             "status": "error",
             "message": f"Training failed: {str(e)}"

@@ -5,7 +5,7 @@ import os
 from io import BytesIO
 import base64
 
-VOLUME_PATH = "./flux-lora-clean"
+VOLUME_PATH = "./flux-lora-finetune"
 
 # Global pipeline variable
 pipeline = None
@@ -30,21 +30,54 @@ def load_pipeline():
         
         # Load trained LoRA if available
         output_dir = os.path.join(VOLUME_PATH, "output")
+        print(f"Looking for LoRA models in: {output_dir}")
+        print(f"Volume path: {VOLUME_PATH}")
+        print(f"Volume exists: {os.path.exists(VOLUME_PATH)}")
+        
         if os.path.exists(output_dir):
+            print(f"Output directory exists: {output_dir}")
+            print(f"Output directory contents:")
+            for item in os.listdir(output_dir):
+                item_path = os.path.join(output_dir, item)
+                if os.path.isdir(item_path):
+                    print(f"  DIR: {item}/")
+                else:
+                    print(f"  FILE: {item}")
+            
             lora_files = find_lora_models(output_dir)
+            print(f"Found {len(lora_files)} LoRA files")
             
             if lora_files:
-                # Prefer final models over checkpoints
+                # Print all found files for debugging
+                for i, f in enumerate(lora_files):
+                    print(f"  {i+1}. {os.path.basename(f)}")
+                
                 final_models = [f for f in lora_files if not any(x in os.path.basename(f) for x in ['_0', 'checkpoint'])]
                 if final_models:
                     latest_lora = max(final_models, key=os.path.getctime)
+                    print(f"Selected final model: {os.path.basename(latest_lora)}")
+                    print(f"Model creation time: {os.path.getctime(latest_lora)}")
                 else:
                     latest_lora = max(lora_files, key=os.path.getctime)
+                    print(f"Selected checkpoint model: {os.path.basename(latest_lora)}")
+                    print(f"Model creation time: {os.path.getctime(latest_lora)}")
                 
                 load_lora_weights(pipeline, latest_lora)
                 print(f"Model loaded from: {os.path.relpath(latest_lora, VOLUME_PATH)}")
             else:
                 print("No LoRA models found - using base FLUX model")
+                if os.path.exists(output_dir):
+                    print("Contents of output directory:")
+                    for root, dirs, files in os.walk(output_dir):
+                        for file in files:
+                            print(f"  - {os.path.join(root, file)}")
+        else:
+            print(f"Output directory does not exist: {output_dir}")
+            print(f"Volume contents:")
+            if os.path.exists(VOLUME_PATH):
+                for root, dirs, files in os.walk(VOLUME_PATH):
+                    for file in files:
+                        print(f"  - {os.path.join(root, file)}")
         
         print("Pipeline loaded successfully!")
         return pipeline
@@ -56,10 +89,28 @@ def load_pipeline():
 def find_lora_models(output_dir):
     """Find available LoRA model files"""
     lora_files = []
+    print(f"Searching for LoRA files in: {output_dir}")
+    
+    if not os.path.exists(output_dir):
+        print(f"Output directory does not exist: {output_dir}")
+        return lora_files
+    
     for root, dirs, files in os.walk(output_dir):
+        print(f"Checking directory: {root}")
         for file in files:
-            if file.endswith('.safetensors') and not '_000000' in file:  # Skip checkpoints
+            print(f"   Found file: {file}")
+            if file.endswith('.safetensors'):
+                if not '_000000' in file and not file.endswith('_0.safetensors'):
+                    lora_files.append(os.path.join(root, file))
+                    print(f"     Added LoRA file: {file}")
+                else:
+                    print(f"     Skipped checkpoint: {file}")
+            elif file.endswith('.bin') or file.endswith('.pt'):
+                # Also check for other common LoRA formats
                 lora_files.append(os.path.join(root, file))
+                print(f"     Added LoRA file: {file}")
+    
+    print(f"Total LoRA files found: {len(lora_files)}")
     return lora_files
 
 def load_lora_weights(pipeline, lora_path):
@@ -93,10 +144,10 @@ def load_lora_weights(pipeline, lora_path):
             "sentencepiece"
         ])
         .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
-    volumes=[Volume(name="flux-lora-clean", mount_path=VOLUME_PATH)],
+    volumes=[Volume(name="flux-lora-finetune", mount_path=VOLUME_PATH)],
     secrets=["HF_TOKEN"],
     autoscaler=QueueDepthAutoscaler(max_containers=1, tasks_per_container=1),
-    keep_warm_seconds=300
+    keep_warm_seconds=60
 )
 def generate(
     prompt: str,
