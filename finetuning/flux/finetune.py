@@ -1,406 +1,237 @@
-from beam import endpoint, Volume, Image, QueueDepthAutoscaler
-import torch
+from beam import function, Volume, Image
 import os
-import shutil
-import yaml
+import requests
 import zipfile
 import tempfile
-import subprocess
-import requests
+import yaml
 from PIL import Image as PILImage
 
-VOLUME_PATH = "./flux-lora-finetune"
+VOLUME_PATH = "./flux-lora-data"
 
-@endpoint(
-    name="train-lora",
+@function(
+    name="simple-flux-train",
     gpu="H100",
-    cpu=8,
+    cpu=4,
     memory="32Gi",
     timeout=3600,
-    keep_warm_seconds=60,
-    volumes=[Volume(name="flux-lora-finetune", mount_path=VOLUME_PATH)],
-    image=Image(python_version="python3.11")
-        .add_python_packages([
-            "torch==2.6.0",
-            "torchvision==0.21.0",
-            "torchao==0.9.0",
-            "safetensors",
-            "transformers==4.52.4",
-            "lycoris-lora==1.8.3",
-            "flatten_json",
-            "pyyaml",
-            "oyaml",
-            "tensorboard",
-            "kornia",
-            "invisible-watermark",
-            "einops",
-            "accelerate",
-            "toml",
-            "albumentations==1.4.15",
-            "albucore==0.0.16",
-            "pydantic",
-            "omegaconf",
-            "k-diffusion",
-            "open_clip_torch",
-            "timm",
-            "prodigyopt",
-            "controlnet_aux==0.0.10",
-            "python-dotenv",
-            "bitsandbytes",
-            "hf_transfer",
-            "lpips",
-            "pytorch_fid",
-            "optimum-quanto==0.2.4",
-            "sentencepiece",
-            "huggingface_hub",
-            "peft",
-            "gradio",
-            "python-slugify",
-            "opencv-python-headless",
-            "pytorch-wavelets==1.3.0",
-            "matplotlib==3.10.1",
-            "diffusers",
-            "packaging",
-            "setuptools<70.0.0",
-            "requests",
-            "pillow"
-        ])
+    volumes=[Volume(name="flux-lora-data", mount_path=VOLUME_PATH)],
+    image=Image(python_version="python3.12")
         .add_commands([
-            "apt-get update && apt-get install -y git libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1",
-            "pip install git+https://github.com/jaretburkett/easy_dwpose.git",
-            "pip install git+https://github.com/huggingface/diffusers@363d1ab7e24c5ed6c190abb00df66d9edb74383b"
-        ])
-        .with_envs("HF_HUB_ENABLE_HF_TRANSFER=1"),
-    secrets=["HF_TOKEN"],
-    autoscaler=QueueDepthAutoscaler(max_containers=3, tasks_per_container=1)
+            "apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1",
+            "git clone https://github.com/ostris/ai-toolkit.git /ai-toolkit",
+            "cd /ai-toolkit && git submodule update --init --recursive",
+            "pip3.12 install --no-cache-dir torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu126",
+            "pip3.12 install pyyaml requests pillow opencv-python-headless",
+            "cd /ai-toolkit && pip3.12 install -r requirements.txt"
+        ]),
+    secrets=["HF_TOKEN"]
 )
-def train_lora(
-    image_zip: str = None,
+
+def train_flux_lora(
+    image_zip: str,
     trigger_word: str = "TOK",
-    steps: int = 1000,
+    steps: int = 1500,
     learning_rate: float = 4e-4,
-    rank: int = 32,
-    alpha: int = 32,
-    resolution: int = 1024
+    rank: int = 32
 ):
     """
-    Fine-tune FLUX model with LoRA using uploaded dataset
-    
-    Args:
-        image_zip: URL to zip file containing training images
-        trigger_word: Token to associate with your concept  
-        steps: Number of training steps
-        learning_rate: Learning rate for training
-        rank: LoRA rank (higher = more capacity)
-        alpha: LoRA alpha (scaling factor)
-        resolution: Training image resolution
+    Train FLUX LoRA
     """
-    print(f"Starting LoRA fine-tuning for '{trigger_word}'")
-    print(f"Training: {steps} steps at {resolution}x{resolution}")
+    print(f"Training '{trigger_word}' LoRA")
     
-    # Setup environment
-    setup_environment()
+    dataset_dir, image_count = setup_dataset(image_zip, trigger_word)
     
-    # Process dataset
-    image_count = process_dataset(image_zip, trigger_word, resolution)
-    
-    if image_count == 0:
-        return {"error": "No training images found"}
-    
-    # Configure training
-    config = create_training_config(
-        trigger_word=trigger_word,
-        steps=steps,
-        learning_rate=learning_rate,
-        rank=rank,
-        alpha=alpha,
-        resolution=resolution
-    )
-    
-    # Run training
-    result = run_training(config)
-    
-    if result["status"] == "success":
-        print("Fine-tuning completed successfully!")
-        return {
-            "status": "success",
-            "message": f"LoRA training completed for '{trigger_word}'",
-            "models": result["models"],
-            "image_count": image_count,
-            "trigger_word": trigger_word,
-            "steps": steps
-        }
-    else:
-        return result
-
-def setup_environment():
-    """Setup training environment and dependencies"""
-    print("Setting up training environment...")
-    
-    # Clone ai-toolkit if needed
-    toolkit_path = "/tmp/ai-toolkit"
-    if not os.path.exists(toolkit_path):
-        print("Downloading ai-toolkit...")
-        subprocess.run([
-            "git", "clone", "https://github.com/ostris/ai-toolkit.git", toolkit_path
-        ], check=True)
-        subprocess.run([
-            "git", "submodule", "update", "--init", "--recursive"
-        ], cwd=toolkit_path, check=True)
-    
-    # Configure environment variables
-    os.environ.update({
-        'DISABLE_TELEMETRY': 'YES',
-        'HF_TOKEN': os.getenv("HF_TOKEN"),
-        'PYTORCH_CUDA_ALLOC_CONF': 'expandable_segments:True,max_split_size_mb:512',
-        'TORCH_CUDNN_V8_API_ENABLED': '1',
-        'NVIDIA_TF32_OVERRIDE': '1',
-        'TORCH_ALLOW_TF32_CUBLAS_OVERRIDE': '1',
-        'TOKENIZERS_PARALLELISM': 'false',
-        'HF_HUB_ENABLE_HF_TRANSFER': '1'
-    })
-    
-    import sys
-    sys.path.insert(0, toolkit_path)
-
-def process_dataset(image_zip, trigger_word, resolution):
-    """Process uploaded dataset for training"""
-    print("Processing training dataset...")
-    
-    # Setup directories
-    base_dir = VOLUME_PATH
-    dataset_dir = os.path.join(base_dir, "dataset")
-    
-    # Clean dataset directory
-    if os.path.exists(dataset_dir):
-        shutil.rmtree(dataset_dir)
-    os.makedirs(dataset_dir, exist_ok=True)
-    
-    if not image_zip:
-        print("No dataset provided, creating dummy data")
-        return create_dummy_dataset(dataset_dir, trigger_word, resolution)
-    
-    # Download and extract dataset
-    try:
-        print(f"Downloading dataset: {image_zip}")
-        zip_response = requests.get(image_zip, timeout=60)
-        zip_response.raise_for_status()
-        
-        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_zip:
-            temp_zip.write(zip_response.content)
-            temp_zip_path = temp_zip.name
-        
-        # Extract and process images
-        image_count = 0
-        with zipfile.ZipFile(temp_zip_path, 'r') as zip_ref:
-            with tempfile.TemporaryDirectory() as temp_extract_dir:
-                zip_ref.extractall(temp_extract_dir)
-                
-                for root, dirs, files in os.walk(temp_extract_dir):
-                    for file in files:
-                        if file.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.bmp')):
-                            if process_image(root, file, dataset_dir, trigger_word, resolution, image_count):
-                                image_count += 1
-        
-        os.remove(temp_zip_path)
-        print(f"Processed {image_count} training images")
-        return image_count
-        
-    except Exception as e:
-        print(f"Dataset processing failed: {e}")
-        return 0
-
-def process_image(root, filename, dataset_dir, trigger_word, resolution, image_count):
-    """Process individual training image"""
-    try:
-        old_path = os.path.join(root, filename)
-        with PILImage.open(old_path) as img:
-            img = img.convert('RGB')
-            img = img.resize((resolution, resolution), PILImage.Resampling.LANCZOS)
-            
-            new_filename = f"training_image_{image_count + 1}.jpg"
-            new_path = os.path.join(dataset_dir, new_filename)
-            img.save(new_path, 'JPEG', quality=95)
-            
-            # Create caption file
-            caption_path = os.path.join(dataset_dir, f"training_image_{image_count + 1}.txt")
-            with open(caption_path, 'w') as f:
-                f.write(f"a photo of {trigger_word}")
-            
-            return True
-    except Exception as e:
-        print(f"Failed to process {filename}: {e}")
-        return False
-
-def create_dummy_dataset(dataset_dir, trigger_word, resolution):
-    """Create dummy dataset for testing"""
-    dummy_img = PILImage.new('RGB', (resolution, resolution), color='red')
-    dummy_img.save(os.path.join(dataset_dir, "dummy.jpg"))
-    
-    with open(os.path.join(dataset_dir, "dummy.txt"), 'w') as f:
-        f.write(f"a photo of {trigger_word}")
-    
-    return 1
-
-def clean_old_models(trigger_word, resolution):
-    """Clean up old models for the same trigger word"""
-    output_dir = "/mnt/code/flux-lora-clean/output"
-    if not os.path.exists(output_dir):
-        return
-    
-    # Find old model directories for this trigger word
-    old_dirs = []
-    for item in os.listdir(output_dir):
-        item_path = os.path.join(output_dir, item)
-        if os.path.isdir(item_path) and trigger_word in item:
-            old_dirs.append(item_path)
-    
-    if old_dirs:
-        print(f"Cleaning up {len(old_dirs)} old model directories:")
-        for old_dir in old_dirs:
-            print(f"  Removing: {os.path.basename(old_dir)}")
-            shutil.rmtree(old_dir)
-
-def create_training_config(trigger_word, steps, learning_rate, rank, alpha, resolution):
-    """Create training configuration"""
-    base_dir = VOLUME_PATH
-    dataset_dir = os.path.join(base_dir, "dataset")
-    # Make the output path absolute before it goes into the YAML
-    output_dir = os.path.abspath(os.path.join(base_dir, "output"))
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Clean up old models for this trigger word
-    clean_old_models(trigger_word, resolution)
+    optimal_steps = (image_count * 100) + 350 
+    print(f"Found {image_count} images")
+    print(f"Adjusted steps: {optimal_steps}")
+    steps = optimal_steps
     
     config = {
         "job": "extension",
         "config": {
-            "name": f"flux_lora_{trigger_word}_{resolution}",
+            "name": f"flux_lora_{trigger_word}",
             "process": [{
                 "type": "sd_trainer",
-                "training_folder": output_dir,
+                "training_folder": VOLUME_PATH,
                 "device": "cuda:0",
                 "trigger_word": trigger_word,
                 "network": {
                     "type": "lora",
-                    "linear": rank,
-                    "linear_alpha": alpha
+                    "linear": 32, 
+                    "linear_alpha": 32,
+                    "network_kwargs": {
+                        "only_if_contains": [
+                            "transformer.single_transformer_blocks.7",  
+                            "transformer.single_transformer_blocks.12",  
+                            "transformer.single_transformer_blocks.16",
+                            "transformer.single_transformer_blocks.20"   
+                        ]
+                    }
                 },
                 "save": {
                     "dtype": "float16",
-                    "save_every": steps // 2,
-                    "max_step_saves_to_keep": 2
+                    "save_every": 10000,
+                    "max_step_saves_to_keep": 4,
+                    "push_to_hub": False
                 },
                 "datasets": [{
-                    "folder_path": os.path.abspath(dataset_dir),
+                    "folder_path": "/ai-toolkit/input",
                     "caption_ext": "txt",
                     "caption_dropout_rate": 0.05,
-                    "cache_latents": True,
-                    "skip_cache_check": True,
                     "shuffle_tokens": False,
                     "cache_latents_to_disk": True,
-                    "resolution": [resolution]
+                    "resolution": [768, 1024]
                 }],
                 "train": {
                     "batch_size": 1,
                     "steps": steps,
-                    "gradient_accumulation_steps": 8,
+                    "gradient_accumulation_steps": 1,
                     "train_unet": True,
                     "train_text_encoder": False,
                     "gradient_checkpointing": False,
                     "noise_scheduler": "flowmatch",
                     "optimizer": "adamw8bit",
-                    "lr": learning_rate,
+                    "lr": 4e-4,
+                    "lr_scheduler": "cosine",
+                    "skip_first_sample": True,
+                    "disable_sampling": True,
                     "ema_config": {
                         "use_ema": True,
                         "ema_decay": 0.99
                     },
-                    "dtype": "fp16"
+                    "dtype": "bf16"
                 },
                 "model": {
                     "name_or_path": "black-forest-labs/FLUX.1-dev",
                     "is_flux": True,
-                    "quantize": True
+                    "quantize": False,
+                    "low_vram": False
                 },
                 "sample": {
                     "sampler": "flowmatch",
-                    "sample_every": steps // 2,
-                    "width": resolution,
-                    "height": resolution,
-                    "prompts": [
-                        f"a photo of {trigger_word}",
-                        f"{trigger_word} in professional lighting",
-                        f"portrait of {trigger_word}, high quality"
-                    ],
+                    "sample_every": 10000,
+                    "width": 1024,
+                    "height": 1024,
+                    "prompts": [f"portrait of {trigger_word} woman"],
                     "neg": "",
                     "seed": 42,
-                    "walk_seed": False,
-                    "guidance_scale": 4,
-                    "sample_steps": 10
+                    "walk_seed": True,
+                    "guidance_scale": 3.5,
+                    "sample_steps": 28
                 }
             }]
+        },
+        "meta": {
+            "name": f"flux_lora_{trigger_word}",
+            "version": "1.0"
         }
     }
     
-    return config
-
-def run_training(config):
-    """Execute the training process"""
-    print("Starting LoRA training...")
+    config_path = "/ai-toolkit/train_config.yaml"
+    with open(config_path, 'w') as f:
+        yaml.dump(config, f, default_flow_style=False)
     
-    try:
-        # Save config
-        toolkit_path = "/tmp/ai-toolkit"
-        config_path = os.path.join(toolkit_path, "config", "train_config.yaml")
-        os.makedirs(os.path.dirname(config_path), exist_ok=True)
-        
-        with open(config_path, 'w') as f:
-            yaml.dump(config, f, default_flow_style=False)
-        
-        # Run training
-        os.chdir(toolkit_path)
-        result = subprocess.run(
-            ["python", "run.py", "config/train_config.yaml"],
-            capture_output=False,
-            text=True,
-            check=True
-        )
-        
-        output_dir = "/mnt/code/flux-lora-clean/output"
-        print(f"Looking for trained models in: {output_dir}")
-        print(f"Output directory exists: {os.path.exists(output_dir)}")
-        
-        model_name = config["config"]["name"]
-        print(f"Looking for newly trained model: {model_name}")
-        
-        trained_models = []
-        if os.path.exists(output_dir):
-            print("Contents of output directory:")
-            for root, dirs, files in os.walk(output_dir):
-                print(f"  Directory: {root}")
-                for file in files:
-                    print(f"     File: {file}")
-                    if file.endswith('.safetensors'):
-                        model_path = os.path.join(root, file)
-                        # Only include models from the current training session
-                        if model_name in model_path:
-                            trained_models.append(model_path)
-                            print(f"       Found LoRA model: {file}")
-                        else:
-                            print(f"       Skipped old model: {file}")
-        
-        print(f"Training completed! Found {len(trained_models)} new model(s)")
-        for i, model in enumerate(trained_models):
-            print(f"  {i+1}. {os.path.relpath(model, '/mnt/code/flux-lora-clean')}")
-        
+    print(f"Config saved to: {config_path}")
+    
+    import subprocess
+    
+    env = os.environ.copy()
+    env.update({
+        'HF_TOKEN': os.getenv('HF_TOKEN'),
+        'CUDA_VISIBLE_DEVICES': '0'
+    })
+    
+    print("Starting training...")
+    process = subprocess.Popen([
+        "python3.12", "/ai-toolkit/run.py", "/ai-toolkit/train_config.yaml"
+    ], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, universal_newlines=True)
+    
+    for line in process.stdout:
+        print(line.rstrip())
+    
+    return_code = process.wait()
+    
+    print("Ensuring models are saved to persistent volume...")
+    copy_models_to_volume()
+    
+    if return_code == 0:
         return {
             "status": "success",
-            "models": trained_models
+            "message": f"Training completed for {trigger_word}",
+            "output": "Training completed successfully"
         }
-        
-    except subprocess.CalledProcessError as e:
-        print(f"Training failed: {str(e)}")
+    else:
         return {
-            "status": "error",
-            "message": f"Training failed: {str(e)}"
+            "status": "error", 
+            "message": f"Training failed with return code {return_code}"
         }
+
+def copy_models_to_volume():
+    """Copy any models from ai-toolkit output to persistent volume"""
+    import shutil
+    
+    source_dir = "/ai-toolkit/output"
+    dest_dir = VOLUME_PATH
+    
+    if os.path.exists(source_dir):
+        print(f"Copying models from {source_dir} to {dest_dir}")
+        
+        for root, dirs, files in os.walk(source_dir):
+            for file in files:
+                if file.endswith('.safetensors') or file.endswith('.yaml') or file.endswith('.json'):
+                    source_file = os.path.join(root, file)
+                    # Create relative path structure in destination
+                    rel_path = os.path.relpath(root, source_dir)
+                    dest_folder = os.path.join(dest_dir, rel_path) if rel_path != '.' else dest_dir
+                    os.makedirs(dest_folder, exist_ok=True)
+                    
+                    dest_file = os.path.join(dest_folder, file)
+                    shutil.copy2(source_file, dest_file)
+                    print(f"Copied: {file}")
+    else:
+        print(f"No source directory {source_dir} found")
+
+def setup_dataset(image_zip, trigger_word):
+    """Download and setup dataset in the format they expect"""
+    dataset_dir = "/ai-toolkit/input"
+    os.makedirs(dataset_dir, exist_ok=True)
+    
+    response = requests.get(image_zip)
+    with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as f:
+        f.write(response.content)
+        zip_path = f.name
+    
+    # Extract images and create captions    
+    count = 0
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        for file in zip_ref.namelist():
+            if file.lower().endswith(('.jpg', '.jpeg', '.png')):
+                zip_ref.extract(file, dataset_dir)
+                
+                base_name = os.path.splitext(file)[0]
+                caption_path = os.path.join(dataset_dir, f"{base_name}.txt")
+                
+                # Only generate caption if .txt file doesn't exist
+                if not os.path.exists(caption_path):
+                    captions = [
+                        f"portrait of {trigger_word} woman with long brown hair, looking at camera",
+                        f"photo of {trigger_word} woman, long brown hair, natural lighting",
+                        f"{trigger_word} woman with long brown hair, outdoor setting",
+                        f"close-up portrait of {trigger_word}, long brown hair, detailed face",
+                        f"{trigger_word} woman sitting, long brown hair, realistic photo",
+                        f"portrait photo of {trigger_word} with long brown hair",
+                        f"{trigger_word} woman, long brown hair, professional lighting",
+                        f"photo of {trigger_word} woman, detailed facial features",
+                        f"{trigger_word} with long brown hair, natural expression",
+                        f"portrait of {trigger_word} woman, high quality photo"
+                    ]
+                    
+                    caption = captions[count % len(captions)]
+                    
+                    with open(caption_path, 'w') as caption_file:
+                        caption_file.write(caption)
+                count += 1
+    
+    os.unlink(zip_path)
+    print(f"Setup {count} training images in {dataset_dir}")
+    return dataset_dir, count

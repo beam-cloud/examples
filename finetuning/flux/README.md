@@ -1,213 +1,287 @@
 # FLUX LoRA Fine-tuning on Beam
 
-Implementation for fine-tuning FLUX models with LoRA using your own image datasets.
+Fast and efficient FLUX LoRA training with optimal parameters for small datasets (10-30 images).
 
 ## Quick Start
 
-1. **Create volume** (one-time setup):
-   ```bash
-   beam volume create flux-lora-finetune
-   ```
+```bash
+# 1. Create volume (one-time setup)
+beam volume create flux-lora-data
 
-2. **Deploy endpoints**:
-   ```bash
-   beam deploy finetune.py:train_lora --name train-lora
-   beam deploy inference.py:generate --name generate-image
-   ```
+# 2. Deploy training endpoint
+beam deploy finetune.py:train_flux_lora
 
-3. **Update configuration** in `upload.py`:
-   - Set your `BEAM_TOKEN`
-   - Update `ENDPOINTS` with your deployed URLs
+# 3. Deploy inference endpoint  
+beam deploy inference.py:generate_image
 
-4. **Train a model**:
-   ```bash
-   python upload.py train ./your_images my_concept
-   ```
+# 4. Update your tokens in upload.py
+# 5. Train your model
+python upload.py train ./your_images yourTriggerWord
 
-5. **Generate images**:
-   ```bash
-   python upload.py generate "a photo of my_concept" my_concept
-   ```
+# 6. Generate images
+python upload.py generate "photo of yourTriggerWord woman" --lora yourTriggerWord
+```
 
 ## Volume Storage
 
-The system uses a persistent Beam volume named `flux-lora-finetune` that automatically stores:
+The system uses persistent volume `flux-lora-data`:
 
 ```
-flux-lora-finetune/
-├── dataset/        # Training datasets
-└── output/         # Trained models
+flux-lora-data/
+├── flux_lora_yourTriggerWord/     # Trained LoRA models
+│   └── flux_lora_yourTriggerWord.safetensors
+├── hf_cache/                      # Cached base models
+└── generated_*.png                # Generated images
 ```
 
 ## File Structure
 
 ```
 flux/
-├── finetune.py     # Training endpoint
-├── inference.py    # Image generation endpoint  
-├── upload.py       # Local dataset handling
-└── README.md       # This file
+├── finetune.py     # Training function (@function)
+├── inference.py    # Generation function (@function)
+├── upload.py       # Client interface (like client.py)
+└── README.md       # This guide
 ```
 
 ## Training
 
+### Optimal Training Parameters
+
+**Perfect for small datasets (10-30 images):**
+```
+Images: 10-30 high-quality photos
+Steps: Auto-calculated (images × 100 + 350)
+Training time: ~10 minutes for 13 images
+VRAM: ~32GB (H100 GPU)
+Resolution: 768px + 1024px mixed
+```
+
 ### Deploy Training Endpoint
 
 ```bash
-beam deploy finetune.py:train_lora --name train-lora
+beam deploy finetune.py:train_flux_lora
 ```
 
-### Start Training with Local Images
+### Start Training
+
+```bash
+python upload.py train ./your_images yourTriggerWord
+```
+
+**Example:**
+```bash
+python upload.py train ./ira_photos irunTok
+```
+
+### Advanced Training Options
+
+```bash
+python upload.py train ./photos myTrigger --steps 1650 --lr 4e-4 --rank 32
+```
+
+**Training Parameters:**
+```
+--steps: Training steps (default: auto-calculated)
+--lr: Learning rate (default: 4e-4)
+--rank: LoRA rank (default: 32)
+```
+
+## Dataset Preparation
+
+### Image Requirements
+
+```
+Format: JPG, JPEG, PNG, WebP
+Count: 10-30 images (LoRA works great with just 10-13 images, no need for more than 30)
+Quality: High-resolution, varied poses
+Consistency: Similar lighting/style
+```
+
+### Caption Handling
+
+The system automatically creates captions for your images:
 
 ```python
-from upload import upload_dataset, start_training
-
-# Upload your dataset
-result = upload_dataset("./training_images", "my_concept")
-
-# Start training
-training = start_training(
-    result["zip_url"], 
-    "my_concept",
-    steps=1000,
-    resolution=1024
-)
+# Auto-generated captions include:
+"portrait of yourTriggerWord woman with long brown hair, looking at camera"
+"photo of yourTriggerWord woman, natural lighting"
+"yourTriggerWord woman with long brown hair, outdoor setting"
 ```
 
-### Training Parameters
-
-- `trigger_word`: Token to associate with your concept (e.g., "my_dog", "abstract_art")
-- `steps`: Training steps (default: 1000)
-- `learning_rate`: Learning rate (default: 4e-4)
-- `rank`: LoRA rank - higher = more capacity (default: 32)
-- `alpha`: LoRA alpha scaling (default: 32)
-- `resolution`: Image resolution (default: 1024)
+**Custom captions:** Create `.txt` files with same name as images:
+```
+your_folder/
+├── photo1.jpg
+├── photo1.txt          # "portrait of myTrigger woman smiling"
+├── photo2.jpg
+└── photo2.txt          # "myTrigger woman in professional attire"
+```
 
 ## Image Generation
 
 ### Deploy Inference Endpoint
 
 ```bash
-beam deploy inference.py:generate --name generate-image
+beam deploy inference.py:generate_image
 ```
 
 ### Generate Images
 
-```python
-from upload import generate_image
+```bash
+python upload.py generate "your prompt here" --lora yourTriggerWord
+```
 
-result = generate_image(
-    "a sample of my_concept in sunlight",
-    "my_concept",
-    width=1024,
-    height=1024,
-    steps=20,
-    seed=42
-)
+**Example:**
+```bash
+python upload.py generate "photo of irunTok woman with brown hair in Paris, on the background Eiffel Tower, high quality" --lora irunTok
 ```
 
 ### Generation Parameters
 
-- `prompt`: Text description of desired image
-- `trigger_word`: Token used during training
-- `width/height`: Image dimensions (256-1024)
-- `num_inference_steps`: Denoising steps (1-50)
-- `guidance_scale`: Prompt following strength (1.0-20.0)
-- `seed`: Random seed for reproducibility
-- `negative_prompt`: What to avoid
-- `num_images`: Number to generate (1-4)
-
-## Complete Workflow
-
-```python
-from upload import full_workflow
-
-# Upload, train, and optionally test
-result = full_workflow(
-    local_folder="./my_images",
-    trigger_word="my_style",
-    test_prompt="a painting in my_style",
-    steps=1000,
-    resolution=1024
-)
+```bash
+python upload.py generate "prompt" --lora triggerWord \
+  --width 1024 --height 1024 --steps 35 --guidance 3.0 --seed 42 --lora-scale 0.9
 ```
 
-## Command Line Usage
+**Parameters:**
+```
+--lora: Your trigger word (LoRA name)
+--width/height: Image dimensions (default: 1024x1024)
+--steps: Inference steps (default: 35)
+--guidance: Prompt adherence (default: 3.0)
+--seed: Random seed for reproducibility
+--lora-scale: LoRA strength 0.0-1.0 (default: 0.9)
+```
+
+## Command Reference
+
+### Training Commands
 
 ```bash
-# Upload dataset only
-python upload.py upload ./images my_concept
+# Basic training
+python upload.py train ./photos triggerWord
 
-# Upload and start training  
-python upload.py train ./images my_concept
+# Custom parameters
+python upload.py train ./photos triggerWord --steps 1650 --lr 4e-4
 
-# Generate image (after training completes)
-python upload.py generate "prompt text" my_concept
-
-# Complete workflow
-python upload.py workflow ./images my_concept "test prompt"
+# Check training status
+python upload.py wait <task_id>
 ```
 
-## Dataset Preparation
+### Generation Commands
 
-**Supported formats:** JPG, JPEG, PNG, WebP, BMP
+```bash
+# Generate with LoRA
+python upload.py generate "prompt" --lora triggerWord
 
-**Recommendations:**
-- 10-50 high-quality images work well
-- Images will be resized to training resolution
-- Varied poses/angles improve results
-- Consistent lighting/style helps
+# Generate without LoRA (base model)
+python upload.py generate "prompt"
 
-**Example folder structure:**
+# Custom generation settings
+python upload.py generate "prompt" --lora triggerWord --width 512 --height 768 --steps 20
 ```
-training_images/
-├── image1.jpg
-├── image2.png
-├── image3.jpg
-└── ...
+
+### File Management
+
+```bash
+# List volume contents
+beam ls flux-lora-data
+
+# Download generated image
+beam cp beam://flux-lora-data/generated_random_9384.png ./
+
+# Download specific file
+python upload.py download --filename generated_random_9384.png
 ```
 
 ## Configuration
 
-**Before using, update `upload.py`:**
+**Update `upload.py` with your credentials:**
 
 ```python
-# Your Beam authentication token
-BEAM_TOKEN = "<your_beam_token_here>"
-
-# Your deployed endpoint URLs
-ENDPOINTS = {
-    "train": "https://train-lora-<your-endpoint>.app.beam.cloud",
-    "inference": "https://generate-image-<your-endpoint>.app.beam.cloud"
-}
+# Replace with your actual tokens
+BEAM_TOKEN = "your_beam_token_here"
+TRAIN_FUNCTION = "https://your-train-endpoint.app.beam.cloud"
+GENERATE_FUNCTION = "https://your-generate-endpoint.app.beam.cloud"
 ```
 
-## Monitoring
+## Step Calculation Formula
 
-- **Beam Dashboard**: https://app.beam.cloud/
-- **Training logs**: Available in Beam dashboard
-- **Model files**: Stored in persistent volume `flux-lora-finetune`
+**Automatic step calculation:**
+```python
+optimal_steps = (image_count × 100) + 350
 
-## Tips
-
-**For better results:**
-```
-- Use descriptive trigger words (e.g., "vintage_car" vs "car")
-- Include trigger word in generation prompts
-- Experiment with guidance_scale (3-15 range)
-- Try different seeds for variety
+# Examples:
+# 5  images = 850 steps (~5 minutes)
+# 10 images = 1,350 steps (~8 minutes)
+# 13 images = 1,650 steps (~10 minutes)  
+# 20 images = 2,350 steps (~15 minutes)
+# 30 images = 3,350 steps (~20 minutes)
 ```
 
-**Training tips:**
+## Tips & Best Practices
+
+### Training Tips
+
 ```
-- More steps = better quality but longer training
-- Higher rank = more capacity but larger files
-- Start with 512px for testing, use 768px or 1024px for final training (better quality)
+Use 10-30 images for best results
+Varied poses and angles improve quality
+Consistent lighting helps training
+Training completes in ~10 minutes for 13 images
+H100 GPU provides optimal performance
 ```
 
-**Generation tips:**
+### Generation Tips
+
 ```
-- Start with 20 inference steps
-- Use guidance_scale 7-10 for most prompts
-- Add negative prompts to avoid unwanted elements
+Always include your trigger word in prompts
+Start with guidance_scale 3.0-4.0
+Use 28-35 inference steps for quality
+Experiment with lora_scale 0.7-1.0
+Try different seeds for variety
+```
+
+### Prompt Examples
+
+```bash
+# Portrait style
+"portrait of yourTrigger woman, professional lighting, high quality"
+
+# Specific scenes
+"photo of yourTrigger woman in Paris, Eiffel Tower background"
+
+# Artistic styles
+"yourTrigger woman in the style of Renaissance painting"
+
+# Different settings
+"yourTrigger woman at sunset, golden hour lighting"
+```
+
+## Troubleshooting
+
+### Training Issues
+
+```
+Check HF_TOKEN is set correctly
+Verify images are valid formats (JPG, PNG)
+Ensure 10-30 images in folder
+Monitor training via Beam dashboard
+```
+
+### Generation Issues
+
+```
+Verify LoRA name matches training trigger word
+Check if training completed successfully
+Try different prompt variations
+Adjust lora_scale if results are too strong/weak
+```
+
+### File Access
+
+```
+Use 'beam ls flux-lora-data' to list files
+Download with 'beam cp beam://flux-lora-data/file.png ./'
+Check Beam dashboard for task status
 ```
