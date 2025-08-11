@@ -82,7 +82,7 @@ def test_quickstart():
         ]
         result = subprocess.run(command, capture_output=True, text=True)
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
-        assert "Deployed" in result.stdout, f"{test_name} failed to deploy"
+        assert "Deployed" in result.stdout, f"{test_name} failed to deploy: {result.stdout}"
 
         match = re.search(curl_pattern, result.stdout, re.DOTALL)
         assert match is not None, f"{test_name} no curl command found"
@@ -93,7 +93,7 @@ def test_quickstart():
             assert (
                 response.status_code == 200
             ), f"{test_name} request to endpoint failed with status code: {response.status_code}"
-            assert "result" in response.text, f"{test_name} unexpected response"
+            assert "result" in response.text, f"{test_name} unexpected response: {response.text}"
     finally:
         delete_deployments(deployment_name)
         os.chdir(current_dir)
@@ -114,7 +114,7 @@ def test_custom_image():
         ]
         result = subprocess.run(command, capture_output=True, text=True)
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
-        assert "Deployed" in result.stdout, f"{test_name} failed to deploy"
+        assert "Deployed" in result.stdout, f"{test_name} failed to deploy {result.stdout}"
         curl_pattern = r"(curl -X POST.+\n(\s*-H .+\n)*\s*-d \'{.*?}\')"
 
         # get the curl command and invoke it
@@ -126,7 +126,7 @@ def test_custom_image():
             assert (
                 response.status_code == 200
             ), f"{test_name} request to endpoint failed with status code: {response.status_code}"
-            assert "torch_version" in response.text, f"{test_name} torch not found in output"
+            assert "torch_version" in response.text, f"{test_name} torch not found in output {response.text}"
 
     finally:
         delete_deployments(deployment_name)
@@ -147,7 +147,7 @@ def test_gpu_acceleration():
         ]
         result = subprocess.run(command, capture_output=True, text=True)
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
-        assert "Deployed" in result.stdout, f"{test_name} failed to deploy"
+        assert "Deployed" in result.stdout, f"{test_name} failed to deploy {result.stdout}"
         curl_pattern = r"(curl -X POST.+\n(\s*-H .+\n)*\s*-d \'{.*?}\')"
 
         # get the curl command and invoke it
@@ -161,7 +161,7 @@ def test_gpu_acceleration():
             ), f"{test_name} request to endpoint failed with status code: {response.status_code}"
             assert (
                 "This container has a GPU attached" in response.text
-            ), f"{test_name} GPU not found in output"
+            ), f"{test_name} GPU not found in output {response.text}"
 
     finally:
         delete_deployments(deployment_name)
@@ -176,8 +176,8 @@ def test_using_secrets():
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
         assert (
             "Function complete" in result.stdout
-        ), f"{test_name} function did not complete"
-        assert "secret" in result.stdout, f"{test_name} no sum in output"
+        ), f"{test_name} function did not complete {result.stdout}"
+        assert "secret" in result.stdout, f"{test_name} no sum in output {result.stdout}"
 
     finally:
         os.chdir(current_dir)
@@ -197,7 +197,7 @@ def test_creating_endpoint():
         ]
         result = subprocess.run(command, capture_output=True, text=True)
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
-        assert "Deployed" in result.stdout, f"{test_name} failed to deploy"
+        assert "Deployed" in result.stdout, f"{test_name} failed to deploy {result.stdout}"
         curl_pattern = r"(curl -X POST.+\n(\s*-H .+\n)*\s*-d \'{.*?}\')"
 
         # get the curl command and invoke it
@@ -210,7 +210,7 @@ def test_creating_endpoint():
             assert (
                 response.status_code == 200
             ), f"{test_name} request to endpoint failed with status code: {response.status_code}"
-            assert "result" in response.text, f"{test_name} result not found in output"
+            assert "result" in response.text, f"{test_name} result not found in output {response.text}"
 
     finally:
         delete_deployments(deployment_name)
@@ -231,7 +231,7 @@ def test_keep_warm():
         ]
         result = subprocess.run(command, capture_output=True, text=True)
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
-        assert "Deployed" in result.stdout, f"{test_name} failed to deploy"
+        assert "Deployed" in result.stdout, f"{test_name} failed to deploy {result.stdout}"
         curl_pattern = r"(curl -X POST.+\n(\s*-H .+\n)*\s*-d \'{.*?}\')"
 
         # get the curl command and invoke it
@@ -243,7 +243,7 @@ def test_keep_warm():
             assert (
                 response.status_code == 200
             ), f"{test_name} request to endpoint failed with status code: {response.status_code}"
-            assert "warm" in response.text, f"{test_name} warm not found in output"
+            assert "warm" in response.text, f"{test_name} warm not found in output {response.text}"
 
     finally:
         delete_deployments(deployment_name)
@@ -264,7 +264,7 @@ def test_preload_models():
         ]
         result = subprocess.run(command, capture_output=True, text=True)
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
-        assert "Deployed" in result.stdout, f"{test_name} failed to deploy"
+        assert "Deployed" in result.stdout, f"{test_name} failed to deploy {result.stdout}"
         curl_pattern = r"(curl -X POST.+\n(\s*-H .+\n)*\s*-d \'{.*?}\')"
 
         # get the curl command and invoke it
@@ -283,7 +283,7 @@ def test_preload_models():
                     ), f"{test_name} request to endpoint failed with status code: {response.status_code} and response: {response.text}"
                     assert (
                         "prediction" in response.text
-                    ), f"{test_name} prediction not found in output"
+                    ), f"{test_name} prediction not found in output {response.text}"
                     return
             except BaseException as e:
                 retries += 1
@@ -309,7 +309,7 @@ def test_task_queue():
         ]
         result = subprocess.run(command, capture_output=True, text=True)
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
-        assert "Deployed" in result.stdout, f"{test_name} failed to deploy"
+        assert "Deployed" in result.stdout, f"{test_name} failed to deploy {result.stdout}"
         curl_pattern = r"(curl -X POST.+\n(\s*-H .+\n)*\s*-d \'{.*?}\')"
 
         # get the curl command and invoke it
@@ -325,7 +325,7 @@ def test_task_queue():
             res = json.loads(response.text)
             assert (
                 res["task_id"] is not None
-            ), f"{test_name} did not get task id in response"
+            ), f"{test_name} did not get task id in response {response.text}"
 
 
             @backoff.on_predicate(backoff.expo, predicate=lambda x: x['status'] in ["PENDING", "RUNNING", "COMPLETED"] , max_tries=10)
@@ -342,7 +342,7 @@ def test_task_queue():
 
             try:
                 res = get_task_status(res['task_id'], AUTH_TOKEN)
-                assert res["status"] == "COMPLETE", f"{test_name} task did not complete successfully"
+                assert res["status"] == "COMPLETE", f"{test_name} task did not complete successfully {res}"
             except requests.exceptions.RequestException as e:
                 assert False, f"{test_name} request to get task status failed: {str(e)}"
 
@@ -360,13 +360,13 @@ def test_task_callbacks():
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
         assert (
             "Function complete" in result.stdout
-        ), f"{test_name} function did not complete"
+        ), f"{test_name} function did not complete {result.stdout}"
         assert (
             "Sending data to callback" in result.stdout
-        ), f"{test_name} failed to send data to callback"
+        ), f"{test_name} failed to send data to callback {result.stdout}"
         assert (
             "Callback request took" in result.stdout
-        ), f"{test_name} callback was not successful"
+        ), f"{test_name} callback was not successful {result.stdout}"
 
     finally:
         os.chdir(current_dir)
@@ -381,9 +381,9 @@ def test_running_functions():
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
         assert (
             "Function complete" in result.stdout
-        ), f"{test_name} function did not complete"
-        assert "{'sum': 285}" in result.stdout, f"{test_name} sum not found in output"
-        assert "{'sum': 14}" in result.stdout, f"{test_name} sum not found in output"
+        ), f"{test_name} function did not complete {result.stdout}"
+        assert "{'sum': 285}" in result.stdout, f"{test_name} sum not found in output {result.stdout}"
+        assert "{'sum': 14}" in result.stdout, f"{test_name} sum not found in output {result.stdout}"
 
     finally:
         os.chdir(current_dir)
@@ -398,8 +398,8 @@ def test_scaling_out():
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
         assert (
             "Function complete" in result.stdout
-        ), f"{test_name} function did not complete"
-        assert "result" in result.stdout, f"{test_name} result not found in output"
+        ), f"{test_name} function did not complete {result.stdout}"
+        assert "result" in result.stdout, f"{test_name} result not found in output {result.stdout}"
 
     finally:
         os.chdir(current_dir)
@@ -414,9 +414,9 @@ def test_sharing_state():
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
         assert (
             "Function complete" in result.stdout
-        ), f"{test_name} function did not complete"
+        ), f"{test_name} function did not complete {result.stdout}"
         assert "eli" in result.stdout, f"{test_name} local pop not found in output"
-        assert "daniel" in result.stdout, f"{test_name} remote pop not found in output"
+        assert "daniel" in result.stdout, f"{test_name} remote pop not found in output {result.stdout}"
 
     finally:
         os.chdir(current_dir)
@@ -431,10 +431,10 @@ def test_volume_use():
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
         assert (
             "Function complete" in result.stdout
-        ), f"{test_name} function did not complete"
+        ), f"{test_name} function did not complete {result.stdout}"
         assert (
             "On the volume!" in result.stdout
-        ), f"{test_name} On the volume not found in output"
+        ), f"{test_name} On the volume not found in output {result.stdout}"
 
     finally:
         os.chdir(current_dir)
@@ -449,11 +449,11 @@ def test_outputs():
         assert result.returncode == 0, f"{test_name} failed with error: {result.stderr}"
         assert (
             "Function complete" in result.stdout
-        ), f"{test_name} function did not complete"
-        assert "Output ID" in result.stdout, f"{test_name} failed to find output ID"
+        ), f"{test_name} function did not complete {result.stdout}"
+        assert "Output ID" in result.stdout, f"{test_name} failed to find output ID {result.stdout}"
         assert (
             "Output Exists: True" in result.stdout
-        ), f"{test_name} failed to confirm output exists"
+        ), f"{test_name} failed to confirm output exists {result.stdout}"
 
     finally:
         os.chdir(current_dir)
