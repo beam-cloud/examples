@@ -11,7 +11,7 @@ image = (
 )
 
 
-@endpoint(image=image)
+@endpoint(app="examples", image=image)
 def handler():
     import torch
 
