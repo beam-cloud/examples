@@ -6,7 +6,7 @@ vllm_image = (
     Image(python_version="python3.10")
     .add_python_packages(
         [
-            "vllm==0.6.3.post1",
+            "vllm",
             "fastapi[standard]==0.115.4",
             "huggingface_hub[hf-transfer]",
         ]
@@ -33,7 +33,7 @@ def generate():
     from vllm.entrypoints.openai.serving_completion import (
         OpenAIServingCompletion,
     )
-    from vllm.entrypoints.openai.serving_engine import BaseModelPath
+    from vllm.entrypoints.openai.serving_engine import BaseModel
     from vllm.usage.usage_lib import UsageContext
 
     web_app = fastapi.FastAPI(
