@@ -5,6 +5,7 @@ VOLUME_PATH = "./example-volume"
 
 
 @function(
+    app="examples",
     volumes=[Volume(name="example-volume", mount_path=VOLUME_PATH)],
 )
 def access_files():

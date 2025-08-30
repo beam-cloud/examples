@@ -2,6 +2,7 @@ from beam import endpoint
 
 
 @endpoint(
+    app="examples",
     cpu=1.0,
     memory=128,
 )

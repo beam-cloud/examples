@@ -28,6 +28,7 @@ def _create_beta9_script():
 
 @schedule(
     "0 2,14,19 * * 1-5",
+    app="examples",
     secrets=[
         "BEAM_WORKSPACE_ID",
         "BEAM_AUTH_TOKEN",

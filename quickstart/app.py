@@ -2,6 +2,7 @@ from beam import endpoint, Image
 
 
 @endpoint(
+    app="examples",
     name="quickstart",
     cpu=1,
     memory="1Gi",
