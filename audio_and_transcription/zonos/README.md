@@ -21,7 +21,7 @@ Send a `POST` request with the following JSON payload:
 curl -X POST 'https://ff6e671a-c43d-468e-ab21-df87c8d87afb.app.beam.cloud' \
 -H 'Connection: keep-alive' \
 -H 'Content-Type: application/json' \
--H 'Authorization: Bearer dERxHlMCz4TDU9k7cxZte_FrILTCvs0nf3KSVe8oZumoTAOa4OIkpJiyGOq_hS9nyangjUG6GC9VmswWd_Rt4g==' \
+-H 'Authorization: Bearer YOUR_BEAM_API_KEY' \
 -d '{ "text": "On Beam run AI workloads anywhere with zero complexity. One line of Python, global GPUs, full control"}'
 
 ### Example Request:
