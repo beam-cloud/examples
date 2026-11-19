@@ -2,6 +2,7 @@ from beam import task_queue, Image
 
 
 @task_queue(
+    app="examples",
     cpu=1.0,
     memory=128,
     gpu="T4",

@@ -4,7 +4,7 @@ from beam import function
 os.environ["FOO"] = "bar"
 
 
-@function(secrets=["FOO"])
+@function(app="examples", secrets=["FOO"])
 def handler():
     import os
 

@@ -1,7 +1,7 @@
 from beam import function
 
 
-@function(callback_url="https://www.beam.cloud/")
+@function(app="examples", callback_url="https://www.beam.cloud/")
 def handler(x):
     return {"result": x}
 

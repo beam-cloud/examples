@@ -1,7 +1,7 @@
 from beam import function
 
 
-@function(cpu="100m", memory="100Mi")  # Each function runs on 100 millicores of CPU
+@function(app="examples", cpu="100m", memory="100Mi")  # Each function runs on 100 millicores of CPU
 def square(x):
     sum = 0
 

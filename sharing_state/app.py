@@ -1,7 +1,7 @@
 from beam import Queue, function
 
 
-@function(cpu=0.1)
+@function(app="examples", cpu=0.1)
 def access_queue():
     q = Queue(name="myqueue")
     return q.pop()

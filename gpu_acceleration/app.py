@@ -2,7 +2,7 @@ import subprocess
 from beam import endpoint
 
 
-@endpoint(gpu="T4")
+@endpoint(app="examples", gpu="T4")
 def handler():
     print(subprocess.check_output(["nvidia-smi"]))
     return "This container has a GPU attached 📡!"
